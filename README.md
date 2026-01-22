@@ -8,6 +8,8 @@
 [![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![Status](https://img.shields.io/badge/status-production-green.svg)]()
 
+**Official Repositories**: [GitHub](https://github.com/jumodada/DrissionMCP) | [GitCode](https://gitcode.com/g1879/DrissionMCP)
+
 [English Version](README.md) | [中文版本](README_CN.md)
 
 ---
