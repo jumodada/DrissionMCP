@@ -1,0 +1,21 @@
+include README.md
+include README_CN.md
+include LICENSE
+include CHANGELOG.md
+include QUICKSTART.md
+include TESTING_AND_INTEGRATION.md
+include PUBLISHING.md
+include CLAUDE.md
+include requirements.txt
+include install.py
+
+recursive-include examples *.json *.md
+recursive-include src *.py
+recursive-include tests *.py
+
+exclude .gitignore
+exclude REFACTORING_SUMMARY.md
+recursive-exclude playground *
+recursive-exclude .idea *
+recursive-exclude __pycache__ *
+recursive-exclude *.egg-info *

@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "drissionpage": {
+      "command": "python",
+      "args": ["-m", "src.cli"],
+      "cwd": "<REPLACE_WITH_YOUR_DRISSIONMCP_PATH>",
+      "env": {}
+    }
+  }
+}

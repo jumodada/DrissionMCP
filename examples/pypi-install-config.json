@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "drissionpage": {
+      "command": "drissionpage-mcp",
+      "env": {}
+    }
+  }
+}
