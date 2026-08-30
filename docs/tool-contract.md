@@ -274,7 +274,7 @@ This table is generated from the strict Pydantic input schemas exposed by `tools
 
 ## Tool Inventory
 
-The 0.8.5 registry contains 69 typed browser tools. Site, component, challenge,
+The 0.8.6 registry contains 69 typed browser tools. Site, component, challenge,
 and business workflows are composed by clients or optional external Skills.
 
 ### Reusable Element Targets
@@ -338,7 +338,7 @@ upload, scroll, hover, select, check, state, wait, and click-download tools.
 
 | Tool | Type | Required input | Description |
 | --- | --- | --- | --- |
-| `browser_headers_set` | Destructive | `headers` | Replace up to 64 extra request headers and echo the accepted values. An empty object clears all configured headers. |
+| `browser_headers_set` | Destructive | `headers` | Replace up to 64 extra request headers. Successful results retain header names and redact non-empty values. An empty object clears all configured headers. |
 | `browser_user_agent_set` | Destructive | `user_agent` | Override the current tab user agent and return the accepted and previous values. Optional: `platform`. |
 | `browser_cache_clear` | Destructive | none | Clear HTTP cache while preserving Cookies, localStorage, and sessionStorage. |
 | `browser_permission_get` | Read-only | `permission` | Query one supported Permissions API state for the current document origin without opening an operating-system prompt. |
@@ -428,7 +428,7 @@ upload, scroll, hover, select, check, state, wait, and click-download tools.
 | Tool | Type | Required input | Description |
 | --- | --- | --- | --- |
 | `browser_cookies_get` | Read-only | none | Read normalized cookies. Values are redacted unless `include_values=true`. |
-| `browser_cookies_set` | Destructive | `cookies` | Set a bounded batch of 1-100 cookies through DrissionPage. Successful results echo Cookie values by default for MCP callbacks. |
+| `browser_cookies_set` | Destructive | `cookies` | Set a bounded batch of 1-100 cookies through DrissionPage. Successful results retain accepted metadata and redact Cookie values. |
 | `browser_cookies_delete` | Destructive | `name` | Delete one named Cookie. Optional: `url`, `domain`, `path`. |
 | `browser_cookies_clear` | Destructive | none | Clear all browser Cookies. |
 | `storage_get` | Read-only | none | Read localStorage/sessionStorage by optional `key`. Values are redacted unless `include_values=true`. Optional: `area`, `include_values`. |
@@ -459,7 +459,7 @@ Resource caps:
 
 ## Prompts
 
-DrissionPage MCP 0.8.5 exposes no MCP prompts. `tools/list`, typed schemas, and
+DrissionPage MCP 0.8.6 exposes no MCP prompts. `tools/list`, typed schemas, and
 typed errors describe the standalone core; procedural guidance belongs in
 optional Skills.
 
@@ -490,9 +490,9 @@ optional Skills.
 - `shadow_*` tools use DrissionPage's native shadow-root object instead of page-JavaScript `host.shadowRoot`. The current supported DrissionPage 4.x path is regression-tested against both open roots and a closed root that is invisible to page JavaScript. Capability failure is reported; the MCP does not inject a piercing fallback.
 - `page_pointer_drag_element` has a different implementation boundary: its synchronous page script remains limited to the top document or one same-origin iframe and nested open Shadow DOM hosts. Tagged source plus `dx`/`dy` is preferred; legacy bare source plus `x`/`y` remains accepted.
 - `browser_cookies_get` redacts cookie values by default. Use `include_values=true` only when the MCP client/session is allowed to handle cookie secrets.
-- `browser_cookies_set` accepts `name`, `value`, optional `url`, `domain`, `path`, `expires`, `secure`, `http_only`, `same_site`, `priority`, and `source_scheme`. Its successful result echoes values by default, so callbacks and logs must be allowed to handle Cookie secrets.
+- `browser_cookies_set` accepts `name`, `value`, optional `url`, `domain`, `path`, `expires`, `secure`, `http_only`, `same_site`, `priority`, and `source_scheme`. Its successful result keeps accepted metadata but replaces non-empty Cookie values with `<redacted>`.
 - `browser_cookies_delete` and `browser_cookies_clear` use DrissionPage's browser Cookie setter directly; they require no user-side browser action and no tool-loading profile.
-- `browser_headers_set`, `browser_user_agent_set`, and `network_blocked_urls_set` echo accepted values by default for callback and verification flows. Sensitive header values must be handled as secrets. Empty header and URL collections clear their respective overrides.
+- `browser_headers_set` returns header names with non-empty values replaced by `<redacted>`. `browser_user_agent_set` continues to return its bounded user-agent metadata, and `network_blocked_urls_set` keeps accepted patterns subject to the public URL redaction boundary. Empty header and URL collections clear their respective overrides.
 - `browser_user_agent_set` also returns `previous_user_agent` so callers can restore the original value without user-side browser action.
 - `browser_cache_clear` explicitly disables Cookie, localStorage, and sessionStorage clearing while invalidating HTTP cache.
 - `storage_get` redacts non-empty values by default. Use `include_values=true` only when the MCP client/session is allowed to handle storage secrets.

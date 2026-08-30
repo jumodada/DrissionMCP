@@ -17,7 +17,7 @@ benchmark is available as:
 DP_HEADLESS=1 DP_NO_SANDBOX=1 DP_MCP_REQUIRE_BROWSER=1 \
 python -m tests.evals.task_completion_benchmark \
   --iterations 10 \
-  --output benchmark-results/0.8.5-task-completion.json
+  --output benchmark-results/0.8.6-task-completion.json
 ```
 
 It starts one isolated browser per iteration, runs W01-W08 through the MCP
@@ -26,8 +26,8 @@ side-effect counters, and fails unless every workload reaches 9/10 with zero
 duplicate side effects. When any run fails, the console output includes a
 bounded `failed_runs` list so CI diagnosis does not depend on artifact access.
 
-The local 0.8.5 report is written to
-`benchmark-results/0.8.5-task-completion.json`. The Ubuntu CI JSON artifact
+The local 0.8.6 report is written to
+`benchmark-results/0.8.6-task-completion.json`. The Ubuntu CI JSON artifact
 remains the release gate for the Linux browser matrix.
 
 The generic challenge-surface benchmark is local and deterministic:

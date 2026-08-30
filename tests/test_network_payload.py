@@ -87,6 +87,64 @@ def test_bounded_body_handles_empty_binary_json_text_and_zero_limits() -> None:
     assert _bounded_body("abcdef", -5) == ("", True, "text")
 
 
+def test_bounded_body_redacts_quoted_form_and_authorization_values() -> None:
+    body, truncated, body_type = _bounded_body(
+        'password="password-secret"&token: "token-secret" '
+        "authorization: Bearer bearer-secret&clientSecret=client-secret",
+        500,
+    )
+
+    assert truncated is False
+    assert body_type == "text"
+    for secret in (
+        "password-secret",
+        "token-secret",
+        "bearer-secret",
+        "client-secret",
+    ):
+        assert secret not in body
+
+
+def test_bounded_body_redacts_camel_case_and_auth_state_json_keys() -> None:
+    body, truncated, body_type = _bounded_body(
+        {
+            "sessionId": "session-secret",
+            "jwt": "jwt-secret",
+            "state": "oauth-state-secret",
+            "code": "oauth-code-secret",
+            "ok": True,
+        },
+        500,
+    )
+
+    assert truncated is False
+    assert body_type == "json"
+    for secret in (
+        "session-secret",
+        "jwt-secret",
+        "oauth-state-secret",
+        "oauth-code-secret",
+    ):
+        assert secret not in body
+    assert '"ok": true' in body
+
+
+def test_network_body_include_values_cannot_bypass_redaction() -> None:
+    body, truncated, body_type = _bounded_body(
+        {
+            "include_values": True,
+            "cookies": [{"name": "sid", "value": "cookie-secret"}],
+            "items": {"auth_token": "storage-secret"},
+        },
+        500,
+    )
+
+    assert truncated is False
+    assert body_type == "json"
+    assert "cookie-secret" not in body
+    assert "storage-secret" not in body
+
+
 def test_network_packet_payload_include_flags_and_failed_packet() -> None:
     packet = FailedPacket(
         url="https://example.test/api",

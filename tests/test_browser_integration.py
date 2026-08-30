@@ -1875,8 +1875,9 @@ async def test_mcp_0_5_5_frame_shadow_and_storage_tools_use_local_fixture() -> N
                 },
             )
             assert cookie_set_payload["data"]["cookies"][0]["value"] == (
-                "callback-secret"
+                "<redacted>"
             )
+            assert "callback-secret" not in json.dumps(cookie_set_payload)
             _content, cookie_state_payload = await _execute_tool(
                 server,
                 "browser_cookies_get",
@@ -1970,8 +1971,9 @@ async def test_mcp_0_7_5_browser_environment_controls_use_local_fixture() -> Non
                 {"headers": {"X-MCP-Session": "callback-secret"}},
             )
             assert headers_payload["data"]["headers"] == {
-                "X-MCP-Session": "callback-secret"
+                "X-MCP-Session": "<redacted>"
             }
+            assert "callback-secret" not in json.dumps(headers_payload)
             _content, ua_payload = await _execute_tool(
                 server,
                 "browser_user_agent_set",

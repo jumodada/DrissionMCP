@@ -50,11 +50,18 @@ class PageOperations:
             raise
 
     async def set_headers(self, headers: dict[str, str]) -> dict[str, Any]:
-        """Replace the current tab's extra HTTP request headers."""
+        """Replace extra request headers and return value-free metadata."""
 
         try:
             self._page.set.headers(headers)
-            return {"count": len(headers), "headers": headers, "set": True}
+            return {
+                "count": len(headers),
+                "headers": {
+                    name: "<redacted>" if value else ""
+                    for name, value in headers.items()
+                },
+                "set": True,
+            }
         except Exception as exc:
             logger.error(
                 "Failed to set browser request headers (%s)", type(exc).__name__

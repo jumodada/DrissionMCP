@@ -386,7 +386,7 @@ async def get_url(context: "DrissionPageContext", args: EmptyInput) -> "ToolOutc
     title="Set Browser Headers",
     description=(
         "Replace extra HTTP request headers for the current tab. Successful "
-        "results echo header values for MCP callbacks; an empty object clears them."
+        "results return header names with values redacted; an empty object clears them."
     ),
     input_schema=BrowserHeadersSetInput,
     tool_type=ToolType.DESTRUCTIVE,

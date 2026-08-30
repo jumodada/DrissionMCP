@@ -16,7 +16,7 @@
 
 ## 🖱️ 带自然指针轨迹的原子化浏览器控制
 
-**DrissionPage MCP 0.8.5 提供 69 个类型化浏览器能力。** MCP 服务负责准确的底层观察与操作，客户端或可选 Skill 负责组合站点、组件库、挑战与业务流程。
+**DrissionPage MCP 0.8.6 提供 69 个类型化浏览器能力。** MCP 服务负责准确的底层观察与操作，客户端或可选 Skill 负责组合站点、组件库、挑战与业务流程。
 
 > **模型决定做什么，MCP 严格执行请求的浏览器操作。**
 
@@ -73,7 +73,7 @@ page_click_xy(x=442, y=369, profile="natural")
 
 **DrissionPage MCP Server** 是一个本地模型上下文协议（MCP）服务器，为 Codex CLI/IDE、Claude Code、Claude Desktop 和其他 MCP 客户端提供 DrissionPage 浏览器自动化工具。
 
-独立服务提供 69 个类型化工具、零个 MCP Prompt 和一个静态可选 Skills 目录资源。0.8.5 保持这套注册表稳定，并增加从 PyPI 到 MCP Registry 的可验证发布元数据和自动化。全部工具默认加载，不存在能力 profile 或需要选择的 `full` 模式。模型组合这些原子能力，挑战与站点流程以可选 Skill 形式放在发行包之外。浏览器执行由 [DrissionPage](https://github.com/g1879/DrissionPage) 提供。
+独立服务提供 69 个类型化工具、零个 MCP Prompt 和一个静态可选 Skills 目录资源。0.8.6 保持这套注册表稳定，强化公共结果脱敏，并将长时间 network listener 等待与无关浏览器操作隔离。全部工具默认加载，不存在能力 profile 或需要选择的 `full` 模式。模型组合这些原子能力，挑战与站点流程以可选 Skill 形式放在发行包之外。浏览器执行由 [DrissionPage](https://github.com/g1879/DrissionPage) 提供。
 
 ### 🌟 为什么选择 DrissionPage MCP？
 
@@ -101,13 +101,19 @@ DrissionPage MCP 有严格的回归测试和真实浏览器场景验证：
 ## ⚡ 首次成功路径
 
 ```bash
+# 安装或更新 Codex CLI（macOS/Linux）
+curl -fsSL https://chatgpt.com/codex/install.sh | sh
+
 # 从 PyPI 安装
-python -m pip install -U "drissionpage-mcp>=0.8.5"
+python -m pip install -U "drissionpage-mcp>=0.8.6"
 
 # 验证包和本地环境
 drissionpage-mcp --version
 drissionpage-mcp doctor
 ```
+
+官方安装脚本也可用于更新已有的 Codex CLI。Windows 和 Codex 桌面应用请参阅[官方
+Codex CLI 与应用文档](https://developers.openai.com/codex/cli/)。
 
 然后添加下面的 Codex 或 MCP 客户端配置并重启客户端。
 
@@ -229,7 +235,7 @@ Claude Code、Claude Desktop 和其他 JSON 配置 MCP 客户端见[集成示例
 - `shadow_find_all` - 从 DrissionPage 暴露的 shadow root 内提取重复元素
 
 ### 🌍 浏览器环境（6 个）
-- `browser_headers_set` - 替换额外请求 header 并回显写入值；传空对象可清空
+- `browser_headers_set` - 替换额外请求 header，结果保留名称并脱敏 value；传空对象可清空
 - `browser_user_agent_set` - 覆盖 user-agent 和可选 platform，同时返回写入值与原 user-agent
 - `browser_cache_clear` - 仅清理 HTTP cache，保留 Cookie、localStorage 和 sessionStorage
 - `browser_permission_get` - 查询当前文档 origin 的一个浏览器权限，不打开操作系统提示
@@ -238,7 +244,7 @@ Claude Code、Claude Desktop 和其他 JSON 配置 MCP 客户端见[集成示例
 
 ### 🍪 Cookie 与 Storage（7 个）
 - `browser_cookies_get` - 读取归一化 cookie，默认脱敏 value
-- `browser_cookies_set` - 单次设置最多 100 个 Cookie，成功结果默认回显 value
+- `browser_cookies_set` - 单次设置最多 100 个 Cookie，成功结果保留元数据并脱敏 value
 - `browser_cookies_delete` - 按名称删除 Cookie，可选 URL/domain/path 精确范围
 - `browser_cookies_clear` - 清空全部浏览器 Cookie
 - `storage_get` - 按 key 或整体读取 localStorage/sessionStorage；value 默认脱敏，仅在 `include_values=true` 时返回
@@ -466,7 +472,7 @@ DP_HEADLESS=1 python playground/run_mcp_lab.py --case form-inspect
 ```bash
 drissionpage-mcp --version
 ```
-应输出已安装的包版本，例如：`drissionpage-mcp 0.8.5`。
+应输出已安装的包版本，例如：`drissionpage-mcp 0.8.6`。
 
 `drissionpage-mcp doctor` 还必须将 `mcp_supported` 和
 `mcp_server_wiring` 都报告为 `ok`；只看到版本号并不能证明 MCP 客户端能够完成初始化。
@@ -498,13 +504,13 @@ which chromium         # macOS
 | **包** | ✅ PyPI 元数据和构建检查 |
 | **状态** | 🟡 Beta；真实浏览器行为取决于本地 Chrome/Chromium 和目标站点 |
 
-**版本**: 0.8.5 | **许可证**: Apache 2.0 | **维护**: ✅ 活跃
+**版本**: 0.8.6 | **许可证**: Apache 2.0 | **维护**: ✅ 活跃
 
 ---
 
 ## 🗺️ 路线图
 
-### 当前版本 (v0.8.5)
+### 当前版本 (v0.8.6)
 - [x] 69 个默认加载的原子导航、标签页/frame/shadow、accessibility、观察、交互、浏览器环境、网络、Cookie/storage、等待与 console 工具
 - [x] stdio MCP 服务器集成
 - [x] 本地环境 doctor 诊断
@@ -523,11 +529,12 @@ which chromium         # macOS
 - [x] 下载触发按 tab 加锁，共享 deadline，保证 cleanup/replay，并在超时后使用 250ms 失败闭合的延迟 mission 保护
 - [x] 可复现的 W01-W08 公共工具 benchmark，每个工作负载运行十轮，保存机器可读证据且重复副作用为零
 - [x] Network listener beta：`network_listen_start`、`network_listen_wait`、`network_listen_stop`，用于 HTTP/XHR/Fetch 观察
-- [x] 纯浏览器请求环境控制：header、user-agent 和 URL 屏蔽写操作回显写入值，cache-only 清理保留 Cookie 与 Web Storage
+- [x] 公共结果对 URL、凭证、header、Cookie、network body、错误、receipt 和文本镜像统一脱敏；listener 等待与无关浏览器操作隔离
+- [x] 纯浏览器请求环境控制：header、user-agent 和 URL 屏蔽写操作结果脱敏，cache-only 清理保留 Cookie 与 Web Storage
 - [x] `page_pointer_move`、`page_pointer_drag` 与 `page_click_xy` 提供 `direct` 和有界、确定性的 `natural` profile，终点精确且失败安全释放
 - [x] 有界的可选 `page_pointer_drag.waypoints`，在一次按住手势中完成画布路径、地图操作、框选或可视化编辑器连线
 - [x] 文件上传、滚动、hover、select/check、键盘、iframe、shadow DOM、cookie 和 storage 工具，面向 DrissionPage 4.x
-- [x] 纯浏览器 Cookie set/get/delete/clear 流程，包括成功结果为 MCP callback 默认回显 value 的有界批量写入
+- [x] 纯浏览器 Cookie set/get/delete/clear 流程，包括成功结果保留元数据并脱敏 value 的有界批量写入
 - [x] 在受支持浏览器矩阵中通过原生 DrissionPage 输入完成受控输入与验证输入的十轮替换回归
 - [x] `frame_*` 读取跨源 OOPIF、DrissionPage 支持的 `shadow_*` 查找 closed Shadow DOM，并单独记录更窄的指针目标边界
 - [x] 为生产挑战流程提供 frame 边界/文档访问分类，以及外层呈现、顶层 viewport 坐标、滚动回执和坐标可操作性证据
@@ -675,11 +682,11 @@ codex mcp list
 
 ---
 
-## 🆕 最新版本：v0.8.5
+## 🆕 最新版本：v0.8.6
 
-发布日期：2026-08-21。本版本让现有 PyPI 包可通过官方 MCP Registry 被发现，且不改变浏览器能力合同：
+发布日期：2026-08-30。本版本保持现有 69 个浏览器工具合同，同时强化隐私与 listener 并发：
 
-- 为 PyPI 包 README 增加 Registry 归属标记，并为 `stdio` PyPI 发行包增加类型化 `server.json`。
-- 增加由 GitHub 版本标签触发的发布链：先通过可信发布上传 PyPI，再通过 GitHub OIDC 发布到 MCP Registry。
-- 记录 Cursor Directory 与 TRAE 安装链接的发布后发现路径。
+- 为公共 URL、凭证、header、Cookie 写入、network body、错误、receipt 和文本镜像建立统一脱敏边界。
+- header 与 Cookie 写入结果只保留安全元数据，避免配置值进入 MCP 响应。
+- `network_listen_wait` 不再占用全局 action lock，并按 tab 串行化 listener 生命周期，同时保留既有 cleanup 与 replay 合同。
 - 公共面仍为 69 tools、0 prompts、1 Skills catalog resource；外部 Skills catalog 继续固定在 `skills-manager` `v0.8.4`。

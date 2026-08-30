@@ -18,7 +18,7 @@ DrissionPage MCP follows a conservative compatibility policy for Python, Drissio
   cleanup release that removes the two 0.3.x alias names listed below; future
   removals must be documented in release notes and migration guidance.
 - DrissionPage 5.x beta/internal builds are not supported by DrissionPage MCP
-  0.8.5. Keep MCP installs pinned to `DrissionPage>=4.1.1.4,<5` until a
+  0.8.6. Keep MCP installs pinned to `DrissionPage>=4.1.1.4,<5` until a
   separate compatibility plan is implemented.
 - Input schema changes should be backward compatible when possible. The 0.4.1 `element_get_property` `property_name` -> `property` cleanup is a documented beta-stage breaking schema correction for LLM usability.
 - Unknown input fields are rejected rather than silently ignored. Update saved
@@ -37,6 +37,23 @@ behavior unchanged. It adds Registry discovery metadata and a release workflow.
   transport. It is release metadata, not a second server implementation.
 - Publishing a `v<version>` tag runs trusted PyPI publishing before Registry
   publication. No client configuration changes are required.
+
+## 0.8.5 to 0.8.6 Migration
+
+0.8.6 keeps the 69-tool registry and adds safety/concurrency fixes without
+introducing a new workflow surface.
+
+- Public URLs remove credentials and fragments, preserve non-sensitive query
+  parameters, and replace sensitive query values with `%3Credacted%3E`.
+- Header and Cookie write results retain names and accepted metadata but return
+  `<redacted>` for non-empty values. Network headers continue to redact known
+  sensitive names while network URLs and bounded JSON/text bodies are sanitized.
+- Error details, structured content, the `### JSON_RESULT` mirror, and ordinary
+  text blocks use the same redaction boundary. Explicit `include_values=true`
+  remains the only value-bearing storage/Cookie read opt-in.
+- `network_listen_wait` no longer occupies the server-wide browser action lock.
+  Listener state on one tab remains serialized across start, wait, and stop.
+  Per-tab action targeting and locks remain planned for 0.8.7.
 
 ## 0.8.3 to 0.8.4 Migration
 

@@ -7,6 +7,8 @@ import logging
 from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any
 
+from ..response_json import redact_public_url
+
 if TYPE_CHECKING:
     from ..tab import PageTab
 
@@ -51,13 +53,17 @@ class StorageOperations:
     async def cookies_set(
         self, *, cookies: list[dict[str, Any]]
     ) -> dict[str, Any]:
-        """Set one bounded cookie batch and echo the accepted MCP payload."""
+        """Set one bounded cookie batch and return redacted write metadata."""
 
         try:
             normalized = [dict(cookie) for cookie in cookies]
             upstream = [_to_drissionpage_cookie(cookie) for cookie in normalized]
             self._page.set.cookies(upstream)
-            return {"count": len(normalized), "set": True, "cookies": normalized}
+            return {
+                "count": len(normalized),
+                "set": True,
+                "cookies": [_cookie_write_metadata(cookie) for cookie in normalized],
+            }
         except Exception as exc:
             logger.error("Failed to set browser cookies (%s)", type(exc).__name__)
             raise
@@ -265,6 +271,16 @@ def _to_drissionpage_cookie(cookie: Mapping[str, Any]) -> dict[str, Any]:
             continue
         mapped[field_names.get(name, name)] = value
     return mapped
+
+
+def _cookie_write_metadata(cookie: Mapping[str, Any]) -> dict[str, Any]:
+    """Return the accepted cookie shape without its secret value or URL secrets."""
+
+    metadata = dict(cookie)
+    metadata["value"] = "<redacted>" if metadata.get("value") else ""
+    if "url" in metadata:
+        metadata["url"] = redact_public_url(metadata.get("url"))
+    return metadata
 
 
 def _storage_name(area: str) -> str:

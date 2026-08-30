@@ -1,4 +1,4 @@
-"""Ten-cycle cross-origin challenge-surface capability benchmark for 0.8.5."""
+"""Ten-cycle cross-origin challenge-surface capability benchmark for 0.8.6."""
 
 from __future__ import annotations
 

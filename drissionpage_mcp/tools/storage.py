@@ -126,8 +126,8 @@ async def browser_cookies_get(
     name="browser_cookies_set",
     title="Set Browser Cookies",
     description=(
-        "Set a bounded batch of browser cookies. The successful result echoes "
-        "cookie values by default for MCP callbacks and verification."
+        "Set a bounded batch of browser cookies. Successful results preserve "
+        "accepted metadata while redacting cookie values."
     ),
     input_schema=BrowserCookiesSetInput,
     tool_type=ToolType.DESTRUCTIVE,

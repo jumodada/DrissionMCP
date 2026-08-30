@@ -13,7 +13,12 @@ import drissionpage_mcp.server as server_module
 from drissionpage_mcp import __version__
 from drissionpage_mcp.server import DrissionPageMCPServer, _tool_supports_output_schema
 from drissionpage_mcp.tools import get_all_tools
-from drissionpage_mcp.tools.base import JSON_RESULT_SENTINEL, ToolSpec, ToolType
+from drissionpage_mcp.tools.base import (
+    JSON_RESULT_SENTINEL,
+    ToolExecutionMode,
+    ToolSpec,
+    ToolType,
+)
 
 
 class TestDrissionPageMCPServer:
@@ -259,6 +264,80 @@ async def test_internal_call_tool_impl_serializes_shared_context(monkeypatch) ->
     assert max_active == 1
     assert len(contexts) == 2
     assert contexts[0] is contexts[1]
+
+
+@pytest.mark.asyncio
+async def test_listener_wait_does_not_block_unrelated_serialized_action(monkeypatch) -> None:
+    """A bounded network wait must release the global action lane while polling."""
+
+    wait_started = asyncio.Event()
+    action_started = asyncio.Event()
+
+    class FakeContext:
+        async def cleanup(self) -> None:
+            return None
+
+    class EmptyArgs(BaseModel):
+        pass
+
+    async def listener_wait(_context, _args):
+        wait_started.set()
+        await asyncio.sleep(0.15)
+        from drissionpage_mcp.tools.base import ToolOutcome
+
+        outcome = ToolOutcome()
+        outcome.add_result(
+            "Captured 0 network packets",
+            listening=True,
+            timed_out=True,
+            count=0,
+            limit=1,
+            packets=[],
+            meta={"approx_tokens": 1, "json_chars": 1, "truncated": False},
+        )
+        return outcome
+
+    async def get_url(_context, _args):
+        action_started.set()
+        from drissionpage_mcp.tools.base import ToolOutcome
+
+        outcome = ToolOutcome()
+        outcome.add_result("Current URL", url="https://example.test")
+        return outcome
+
+    from drissionpage_mcp.tool_outputs import NetworkListenWaitData, PageGetUrlData
+
+    monkeypatch.setattr(server_module, "DrissionPageContext", FakeContext)
+    server = DrissionPageMCPServer()
+    server.tools["network_listen_wait"] = ToolSpec(
+        name="network_listen_wait",
+        title="Wait",
+        description="Wait for packets",
+        input_model=EmptyArgs,
+        output_model=NetworkListenWaitData,
+        handler=listener_wait,
+        tool_type=ToolType.READ_ONLY,
+        execution_mode=ToolExecutionMode.CONCURRENT,
+    )
+    server.tools["page_get_url"] = ToolSpec(
+        name="page_get_url",
+        title="URL",
+        description="Read URL",
+        input_model=EmptyArgs,
+        output_model=PageGetUrlData,
+        handler=get_url,
+        tool_type=ToolType.READ_ONLY,
+    )
+
+    wait_task = asyncio.create_task(server._call_tool_impl("network_listen_wait", {}))
+    await asyncio.wait_for(wait_started.wait(), timeout=0.1)
+    await asyncio.wait_for(
+        server._call_tool_impl("page_get_url", {}),
+        timeout=0.08,
+    )
+    assert action_started.is_set()
+    result = await wait_task
+    assert result.isError is False
 
 
 @pytest.mark.asyncio

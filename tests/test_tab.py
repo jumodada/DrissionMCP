@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import asyncio
 import base64
+import threading
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -894,8 +896,8 @@ async def test_browser_environment_controls_use_public_drissionpage_apis() -> No
     ) == {
         "count": 2,
         "headers": {
-            "X-MCP-Session": "callback-value",
-            "Accept-Language": "zh-CN",
+            "X-MCP-Session": "<redacted>",
+            "Accept-Language": "<redacted>",
         },
         "set": True,
     }
@@ -1757,7 +1759,14 @@ async def test_cookie_write_paths_map_fields_and_echo_values() -> None:
             {"name": "theme", "value": "dark"},
         ]
     ]
-    assert result == {"count": 2, "set": True, "cookies": cookies}
+    assert result == {
+        "count": 2,
+        "set": True,
+        "cookies": [
+            {**cookies[0], "value": "<redacted>"},
+            {**cookies[1], "value": "<redacted>"},
+        ],
+    }
 
     deleted = await tab.storage.cookies_delete(
         name="sid",
@@ -2338,6 +2347,39 @@ async def test_network_wait_requires_active_listener() -> None:
         await PageTab(
             FakeNetworkPage(FakeNetworkListener(listening=False)), FakeContext()
         ).network.wait()
+
+
+@pytest.mark.asyncio
+async def test_network_wait_cancellation_keeps_listener_state_serialized() -> None:
+    started = threading.Event()
+    release = threading.Event()
+
+    class BlockingListener(FakeNetworkListener):
+        def wait(self, **kwargs):
+            self.wait_calls.append(kwargs)
+            started.set()
+            release.wait(1)
+            return False
+
+    listener = BlockingListener(listening=True)
+    network = PageTab(FakeNetworkPage(listener), FakeContext()).network
+    await network.start(clear=False)
+
+    wait_task = asyncio.create_task(network.wait(timeout=1))
+    assert await asyncio.to_thread(started.wait, 0.2)
+
+    wait_task.cancel()
+    await asyncio.sleep(0.01)
+    start_task = asyncio.create_task(network.start(clear=False))
+    await asyncio.sleep(0.02)
+    assert not start_task.done()
+    wait_task.cancel()
+
+    release.set()
+    with pytest.raises(asyncio.CancelledError):
+        await wait_task
+    await asyncio.wait_for(start_task, timeout=0.5)
+    assert len(listener.start_calls) == 2
 
 
 @pytest.mark.asyncio

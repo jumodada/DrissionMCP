@@ -4267,7 +4267,7 @@
       "readOnlyHint": false,
       "title": "Set Browser Headers"
     },
-    "description": "Replace extra HTTP request headers for the current tab. Successful results echo header values for MCP callbacks; an empty object clears them.",
+    "description": "Replace extra HTTP request headers for the current tab. Successful results return header names with values redacted; an empty object clears them.",
     "inputSchema": {
       "additionalProperties": false,
       "description": "Input schema for replacing extra HTTP request headers.",
@@ -15670,7 +15670,7 @@
       "readOnlyHint": false,
       "title": "Set Browser Cookies"
     },
-    "description": "Set a bounded batch of browser cookies. The successful result echoes cookie values by default for MCP callbacks and verification.",
+    "description": "Set a bounded batch of browser cookies. Successful results preserve accepted metadata while redacting cookie values.",
     "inputSchema": {
       "$defs": {
         "BrowserCookieInput": {

@@ -18,7 +18,12 @@ from ..response_errors import (
     public_failure_message,
     recovery_hints,
 )
-from ..response_json import json_safe_value, strict_json_dumps
+from ..response_json import (
+    _sanitize_string,
+    redact_public_payload,
+    redact_public_text,
+    strict_json_dumps,
+)
 from ..response_media import build_screenshot_metadata
 
 if TYPE_CHECKING:
@@ -34,6 +39,13 @@ class ToolType(Enum):
 
     READ_ONLY = "readOnly"
     DESTRUCTIVE = "destructive"
+
+
+class ToolExecutionMode(Enum):
+    """How a tool participates in the shared browser execution lane."""
+
+    SERIALIZED = "serialized"
+    CONCURRENT = "concurrent"
 
 
 class ToolInput(BaseModel):
@@ -57,7 +69,7 @@ class ToolOutcome:
     _error: ToolError | None = None
 
     def add_text(self, text: str) -> None:
-        self._content.append(TextContent(type="text", text=text))
+        self._content.append(TextContent(type="text", text=redact_public_text(text)))
 
     def add_error(
         self,
@@ -79,18 +91,21 @@ class ToolOutcome:
         code_value = (
             error_code.value if isinstance(error_code, ErrorCode) else str(error_code)
         )
-        self._message = error
-        self._error = ToolError(code=code_value, message=error, details=error_details)
-        self._content.append(TextContent(type="text", text=f"### Error\n{error}"))
+        safe_error = _sanitize_string(error)
+        self._message = safe_error
+        safe_details = redact_public_payload(error_details)
+        self._error = ToolError(code=code_value, message=safe_error, details=safe_details)
+        self._content.append(TextContent(type="text", text=f"### Error\n{safe_error}"))
 
     def add_result(self, message: str, **data: Any) -> None:
-        self.set_result(message, data)
-        self._content.append(TextContent(type="text", text=f"### Result\n{message}"))
+        safe_message = _sanitize_string(message)
+        self.set_result(safe_message, data)
+        self._content.append(TextContent(type="text", text=f"### Result\n{safe_message}"))
 
     def set_result(self, message: str, data: dict[str, Any]) -> None:
         """Set structured success data without adding a presentation block."""
 
-        self._message = message
+        self._message = _sanitize_string(message)
         self._data = data
 
     def add_image(self, image_data: str | bytes, mime_type: str = "image/png") -> None:
@@ -127,10 +142,10 @@ class ToolOutcome:
             }
             if self._data:
                 payload["data"] = self._data
-            return cast(dict[str, Any], json_safe_value(payload))
+            return cast(dict[str, Any], redact_public_payload(payload))
         return cast(
             dict[str, Any],
-            json_safe_value(
+            redact_public_payload(
                 {
                     "ok": True,
                     "message": self._message or "Operation completed successfully.",
@@ -179,6 +194,7 @@ class ToolSpec(Generic[InputT, OutputT]):
     handler: ToolHandler[InputT]
     tool_type: ToolType = ToolType.READ_ONLY
     idempotent: bool = False
+    execution_mode: ToolExecutionMode = ToolExecutionMode.SERIALIZED
     failure_message: Callable[[InputT, Exception], str] | None = None
 
     @property
@@ -227,6 +243,7 @@ def define_tool(
     output_model: type[OutputT],
     tool_type: ToolType = ToolType.READ_ONLY,
     idempotent: bool = False,
+    execution_mode: ToolExecutionMode = ToolExecutionMode.SERIALIZED,
     failure_message: Callable[[InputT, Exception], str] | None = None,
 ) -> Callable[[ToolHandler[InputT]], ToolSpec[InputT, OutputT]]:
     """Define a typed tool specification from a two-argument async handler."""
@@ -241,6 +258,7 @@ def define_tool(
             handler=handler,
             tool_type=tool_type,
             idempotent=idempotent,
+            execution_mode=execution_mode,
             failure_message=failure_message,
         )
 
@@ -251,6 +269,7 @@ __all__ = [
     "EmptyInput",
     "JSON_RESULT_SENTINEL",
     "ToolInput",
+    "ToolExecutionMode",
     "ToolOutcome",
     "ToolSpec",
     "ToolType",

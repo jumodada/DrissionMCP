@@ -3,10 +3,16 @@
 from __future__ import annotations
 
 import base64
+import json
 from collections.abc import Mapping
 from typing import Any
 
-from .response_json import strict_json_dumps
+from .response_json import (
+    redact_public_payload,
+    redact_public_text,
+    redact_public_url,
+    strict_json_dumps,
+)
 
 SENSITIVE_NETWORK_HEADERS = {
     "authorization",
@@ -15,6 +21,26 @@ SENSITIVE_NETWORK_HEADERS = {
     "x-api-key",
     "proxy-authorization",
 }
+
+
+def _redact_network_url(value: Any) -> str:
+    return redact_public_url(str(value or ""))
+
+
+def _redact_body_text(text: str) -> str:
+    try:
+        parsed = json.loads(text)
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return redact_public_text(text, include_network_fields=True)
+    return strict_json_dumps(
+        redact_public_payload(
+            parsed,
+            _context="network_body",
+            _force_redact_values=True,
+        ),
+        ensure_ascii=False,
+        sort_keys=True,
+    )
 
 
 def _network_packet_payload(
@@ -31,7 +57,7 @@ def _network_packet_payload(
     fail_info = _safe_packet_attr(packet, "fail_info") if failed else None
     payload: dict[str, Any] = {
         "index": index,
-        "url": str(_safe_packet_attr(packet, "url", "") or ""),
+        "url": _redact_network_url(_safe_packet_attr(packet, "url", "")),
         "method": str(_safe_packet_attr(packet, "method", "") or ""),
         "resource_type": str(_safe_packet_attr(packet, "resourceType", "") or ""),
         "status": _safe_int_or_none(_safe_packet_attr(response, "status")),
@@ -120,5 +146,6 @@ def _bounded_body(value: Any, max_chars: int) -> tuple[str, bool, str]:
     else:
         text = str(value)
         body_type = "text"
+    text = _redact_body_text(text)
     limit = max(0, int(max_chars))
     return text[:limit], len(text) > limit, body_type

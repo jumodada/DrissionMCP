@@ -16,7 +16,7 @@
 
 ## 🖱️ Atomic Browser Control with Natural Pointer Motion
 
-**DrissionPage MCP 0.8.5 exposes 69 typed browser capabilities.** The MCP server provides accurate low-level observation and interaction; the client or an optional Skill composes those capabilities for a site, component library, challenge, or business workflow.
+**DrissionPage MCP 0.8.6 exposes 69 typed browser capabilities.** The MCP server provides accurate low-level observation and interaction; the client or an optional Skill composes those capabilities for a site, component library, challenge, or business workflow.
 
 <!-- mcp-name: io.github.jumodada/drissionpage-mcp -->
 
@@ -75,7 +75,7 @@ Designed for authorized browser automation, testing, accessibility workflows, an
 
 **DrissionPage MCP Server** is a local Model Context Protocol (MCP) server that brings DrissionPage browser automation tools to Codex CLI/IDE, Claude Code, Claude Desktop, and other MCP clients.
 
-The standalone server exposes 69 typed tools, zero MCP prompts, and one static optional-Skills catalog resource. Version 0.8.5 keeps that registry stable and adds verified PyPI-to-MCP-Registry release metadata and automation. Every tool loads by default; there is no capability profile or opt-in `full` mode. Models compose these atomic capabilities, while reusable challenge and site procedures live outside the distribution as optional Skills. Browser execution is powered by [DrissionPage](https://github.com/g1879/DrissionPage).
+The standalone server exposes 69 typed tools, zero MCP prompts, and one static optional-Skills catalog resource. Version 0.8.6 keeps that registry stable, hardens public-response redaction, and isolates long network-listener waits from unrelated browser actions. Every tool loads by default; there is no capability profile or opt-in `full` mode. Models compose these atomic capabilities, while reusable challenge and site procedures live outside the distribution as optional Skills. Browser execution is powered by [DrissionPage](https://github.com/g1879/DrissionPage).
 
 ### 🌟 Why Choose DrissionPage MCP?
 
@@ -103,13 +103,20 @@ DrissionPage MCP is backed by a strict regression suite and browser-backed scena
 ## ⚡ First Success Path
 
 ```bash
+# Install or update Codex CLI (macOS/Linux)
+curl -fsSL https://chatgpt.com/codex/install.sh | sh
+
 # Install from PyPI
-python -m pip install -U "drissionpage-mcp>=0.8.5"
+python -m pip install -U "drissionpage-mcp>=0.8.6"
 
 # Verify package and environment
 drissionpage-mcp --version
 drissionpage-mcp doctor
 ```
+
+The official installer updates an existing Codex CLI installation as well. For
+Windows and the Codex desktop app, see the [official Codex CLI and app
+documentation](https://developers.openai.com/codex/cli/).
 
 Then add the Codex or MCP client configuration below and restart your client.
 
@@ -231,7 +238,7 @@ For Claude Code, Claude Desktop, and other JSON-based MCP clients, see [Integrat
 - `shadow_find_all` - Extract repeated elements from a DrissionPage-exposed shadow root
 
 ### 🌍 Browser Environment (6 tools)
-- `browser_headers_set` - Replace extra request headers and echo the accepted values; an empty object clears them
+- `browser_headers_set` - Replace extra request headers and return names with redacted values; an empty object clears them
 - `browser_user_agent_set` - Override the user agent and optional platform, returning both the accepted and previous user agents
 - `browser_cache_clear` - Clear HTTP cache while preserving Cookies, localStorage, and sessionStorage
 - `browser_permission_get` - Query one browser permission for the current document origin without opening an OS prompt
@@ -240,7 +247,7 @@ For Claude Code, Claude Desktop, and other JSON-based MCP clients, see [Integrat
 
 ### 🍪 Cookies & Storage (7 tools)
 - `browser_cookies_get` - Read normalized cookies with values redacted by default
-- `browser_cookies_set` - Set up to 100 cookies in one call and echo values in the successful result by default
+- `browser_cookies_set` - Set up to 100 cookies in one call and return accepted metadata with redacted values
 - `browser_cookies_delete` - Delete one named cookie with optional URL/domain/path scope
 - `browser_cookies_clear` - Clear all browser cookies
 - `storage_get` - Read localStorage/sessionStorage by key or as a map, with values redacted unless `include_values=true`
@@ -470,7 +477,7 @@ DP_HEADLESS=1 python playground/run_mcp_lab.py --case form-inspect
 ```bash
 drissionpage-mcp --version
 ```
-Should output the installed package version, for example `drissionpage-mcp 0.8.5`.
+Should output the installed package version, for example `drissionpage-mcp 0.8.6`.
 
 `drissionpage-mcp doctor` must also report both `mcp_supported` and
 `mcp_server_wiring` as `ok`; package-version output alone does not prove that an
@@ -503,13 +510,13 @@ See [docs/troubleshooting.md](docs/troubleshooting.md) for the complete troubles
 | **Package** | ✅ PyPI metadata and build checks |
 | **Status** | 🟡 Beta; real browser behavior depends on local Chrome/Chromium and target sites |
 
-**Version**: 0.8.5 | **License**: Apache 2.0 | **Maintained**: ✅ Active
+**Version**: 0.8.6 | **License**: Apache 2.0 | **Maintained**: ✅ Active
 
 ---
 
 ## 🗺️ Roadmap
 
-### Current (v0.8.5)
+### Current (v0.8.6)
 - [x] 69 atomic navigation, tab/frame/shadow, accessibility, observation, interaction, browser-environment, network, Cookie/storage, wait, and console tools, all loaded by default
 - [x] stdio MCP server integration
 - [x] Doctor diagnostics for local setup
@@ -528,11 +535,12 @@ See [docs/troubleshooting.md](docs/troubleshooting.md) for the complete troubles
 - [x] Per-tab download trigger locking, shared deadlines, cleanup/replay guarantees, and a 250ms fail-closed late-mission guard
 - [x] Reproducible W01-W08 public-tool benchmark with ten isolated runs per workload, machine-readable evidence, and zero duplicate side effects
 - [x] Network listener beta with `network_listen_start`, `network_listen_wait`, and `network_listen_stop` for HTTP/XHR/Fetch observation
-- [x] Browser-only request environment control with echoed header, user-agent, and blocked-URL writes plus cache-only clearing that preserves Cookies and Web Storage
+- [x] Public-response redaction for URLs, credentials, headers, Cookies, network bodies, errors, receipts, and text mirrors; listener waits are isolated from unrelated browser actions
+- [x] Browser-only request environment control with redacted header, user-agent, and blocked-URL write results plus cache-only clearing that preserves Cookies and Web Storage
 - [x] `direct` and deterministic bounded `natural` profiles for `page_pointer_move`, `page_pointer_drag`, and `page_click_xy`, with exact endpoints and failure-safe release
 - [x] Optional bounded `page_pointer_drag.waypoints` for one held multi-segment canvas, map, box-selection, or visual-editor gesture
 - [x] File upload, scrolling, hover, select/check, keyboard, iframe, shadow DOM, cookie, and storage tools for DrissionPage 4.x
-- [x] Pure browser Cookie set/get/delete/clear flow, including bounded batch writes whose successful results echo values for MCP callbacks
+- [x] Pure browser Cookie set/get/delete/clear flow, including bounded batch writes whose successful results retain metadata with redacted values
 - [x] Ten-cycle controlled and validation input replacement through native DrissionPage input on the supported browser matrix
 - [x] Cross-origin OOPIF reads through `frame_*` and closed Shadow DOM lookup through DrissionPage-backed `shadow_*`, with narrower pointer targeting documented separately
 - [x] Frame boundary/document-access classification plus outer presentation, top-level viewport coordinate, scroll receipt, and coordinate-actionability evidence for production challenge workflows
@@ -680,11 +688,11 @@ If you find this project useful, please consider:
 
 ---
 
-## 🆕 Latest Version: v0.8.5
+## 🆕 Latest Version: v0.8.6
 
-Released on 2026-08-21. This release makes the existing PyPI package discoverable through the official MCP Registry without changing the browser capability contract:
+Released on 2026-08-30. This release keeps the existing 69-tool browser capability contract while hardening privacy and listener concurrency:
 
-- Adds the Registry ownership marker to the PyPI package README and a typed `server.json` for the `stdio` PyPI distribution.
-- Adds a tag-gated GitHub Actions release chain: trusted PyPI publishing first, then GitHub OIDC publication to the MCP Registry.
-- Documents the post-publication discovery paths for Cursor Directory and TRAE installation links.
+- Applies one redaction boundary to public URLs, credentials, headers, Cookie writes, network bodies, errors, receipts, and text mirrors.
+- Returns metadata-only results for header and Cookie writes, preventing configured values from being echoed into MCP responses.
+- Keeps `network_listen_wait` out of the global action lock and serializes listener lifecycle state per tab, while preserving the existing cleanup and replay contracts.
 - Keeps the public surface at 69 tools, zero prompts, and one Skills catalog resource. The external Skills catalog remains pinned to `skills-manager` `v0.8.4`.

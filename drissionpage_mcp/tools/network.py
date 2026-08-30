@@ -14,7 +14,13 @@ from ..tool_outputs import (
     NetworkListenStopData,
     NetworkListenWaitData,
 )
-from .base import ToolInput, ToolOutcome, ToolType, define_tool
+from .base import (
+    ToolExecutionMode,
+    ToolInput,
+    ToolOutcome,
+    ToolType,
+    define_tool,
+)
 
 if TYPE_CHECKING:
     from ..context import DrissionPageContext
@@ -126,6 +132,7 @@ async def network_listen_start(
     description="Wait for observed HTTP/XHR/Fetch packets and return bounded metadata. Bodies and headers are opt-in and sensitive headers are redacted.",
     input_schema=NetworkListenWaitInput,
     tool_type=ToolType.READ_ONLY,
+    execution_mode=ToolExecutionMode.CONCURRENT,
     output_model=NetworkListenWaitData,
     failure_message=lambda args, exc: "Failed to wait for network packets: " + str(exc),
 )

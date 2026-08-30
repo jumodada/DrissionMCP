@@ -1234,7 +1234,7 @@ async def test_common_tools_success_paths(monkeypatch, tmp_path) -> None:
     )
     assert headers_response.structured_content()["data"] == {
         "count": 1,
-        "headers": {"X-MCP-Session": "callback-secret"},
+        "headers": {"X-MCP-Session": "<redacted>"},
         "set": True,
     }
     user_agent_response = await _execute(
@@ -1444,9 +1444,9 @@ async def test_frame_shadow_and_storage_tools_success_paths() -> None:
         "count": 1,
         "set": True,
         "cookies": [
-            {
-                "name": "sid",
-                "value": "callback-secret",
+                {
+                    "name": "sid",
+                    "value": "<redacted>",
                 "url": "",
                 "domain": "example.test",
                 "path": "/",

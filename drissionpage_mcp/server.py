@@ -28,7 +28,7 @@ from .resources import read_resource as read_resource_definition
 from .response_errors import ErrorCode, classify_error, public_failure_message
 from .tools import ToolSpec as DrissionTool
 from .tools import get_all_tools
-from .tools.base import ToolOutcome, ToolType
+from .tools.base import ToolExecutionMode, ToolOutcome, ToolType
 
 logger = logging.getLogger(__name__)
 
@@ -113,7 +113,10 @@ class DrissionPageMCPServer:
             try:
                 context = await self._begin_tool_call()
                 call_started = True
-                if name in _CONCURRENT_DIALOG_TOOLS:
+                if (
+                    name in _CONCURRENT_DIALOG_TOOLS
+                    or tool.execution_mode is ToolExecutionMode.CONCURRENT
+                ):
                     outcome = await tool.execute(context, validated_args)
                 else:
                     async with self._execution_lock:

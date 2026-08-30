@@ -144,16 +144,16 @@ jobs:
         run: |
           python -m tests.evals.task_completion_benchmark \
             --iterations 10 \
-            --output benchmark-results/0.8.5-task-completion.json
+            --output benchmark-results/0.8.6-task-completion.json
           python -m tests.evals.challenge_surface_benchmark \
             --iterations 10 \
-            --output benchmark-results/0.8.5-challenge-surfaces.json
+            --output benchmark-results/0.8.6-challenge-surfaces.json
       - name: Upload task-completion benchmark
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: 0.8.5-browser-benchmarks
-          path: benchmark-results/0.8.5-*.json
+          name: 0.8.6-browser-benchmarks
+          path: benchmark-results/0.8.6-*.json
           if-no-files-found: warn
 
   browser-boundaries:
@@ -345,7 +345,7 @@ jobs:
 
           mcp_version = version("mcp")
           assert mcp_version.split(".", 1)[0] == "1", mcp_version
-          assert version("drissionpage-mcp") == "0.8.5"
+          assert version("drissionpage-mcp") == "0.8.6"
           assert "site-packages" in str(Path(drissionpage_mcp.__file__).resolve())
           report = run_diagnostics()
           checks = {item["name"]: item for item in report["checks"]}
@@ -375,7 +375,7 @@ jobs:
                   async with ClientSession(read_stream, write_stream) as session:
                       init = await session.initialize()
                       assert init.serverInfo.name == "DrissionPage MCP"
-                      assert init.serverInfo.version == "0.8.5"
+                      assert init.serverInfo.version == "0.8.6"
                       tools = await session.list_tools()
                       assert len(tools.tools) == 69
                       resources = await session.list_resources()
@@ -453,7 +453,7 @@ jobs:
 
           from drissionpage_mcp.doctor import run_diagnostics
 
-          assert version("drissionpage-mcp") == "0.8.5"
+          assert version("drissionpage-mcp") == "0.8.6"
           report = run_diagnostics()
           checks = {item["name"]: item for item in report["checks"]}
           assert report["ok"], report

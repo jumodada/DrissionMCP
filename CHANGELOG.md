@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.6] - 2026-08-30
+
+### Security
+- Added one public-response redaction boundary for URLs, credentials, headers,
+  Cookie writes, network bodies, errors, receipts, and text mirrors. Explicit
+  `include_values=true` storage/Cookie reads remain opt-in value-bearing paths.
+
+### Changed
+- Changed header and Cookie write results to retain names and bounded metadata
+  while replacing values with `<redacted>`.
+- Marked `network_listen_wait` as a non-global-locking wait and serialized each
+  tab's listener start/wait/stop lifecycle under its own state lock.
+
+### Fixed
+- Prevented a cancelled listener wait from releasing per-tab lifecycle
+  ownership while its underlying worker was still active, keeping start/wait/stop
+  deterministic during cancellation.
+
 ## [0.8.5] - 2026-08-21
 
 ### Added
@@ -652,7 +670,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Fixed` for any bug fixes
 - `Security` in case of vulnerabilities
 
-[Unreleased]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.5...HEAD
+[Unreleased]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.6...HEAD
+[0.8.6]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.5...0.8.6
 [0.8.5]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.4...0.8.5
 [0.8.4]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.3...0.8.4
 [0.8.3]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.2...0.8.3

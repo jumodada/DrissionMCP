@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "drissionpage-mcp"
-version = "0.8.5"
+version = "0.8.6"
 description = "Professional browser automation for Codex, Claude Code, and MCP clients powered by DrissionPage"
 authors = [
     { name = "Wukunyun", email = "864353360@qq.com" }
