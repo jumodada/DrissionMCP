@@ -96,7 +96,7 @@ def test_077_inputs_are_strict_and_bounded(tmp_path: Path) -> None:
         setting="granted",
         origin="https://example.test",
     ).setting == "granted"
-    assert PermissionsResetInput().model_dump() == {}
+    assert PermissionsResetInput().model_dump() == {"tab_id": None}
     assert ExportInput(format="pdf", filename="report.pdf").format == "pdf"
     assert ClickUploadInput(
         selector="#file", paths=[str(upload_file)], timeout=5

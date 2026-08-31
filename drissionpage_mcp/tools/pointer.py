@@ -15,7 +15,7 @@ from ..tool_outputs import (
     PagePointerDragElementData,
     PagePointerMoveData,
 )
-from .base import ToolInput, ToolOutcome, ToolType, define_tool
+from .base import TabScopedInput, ToolOutcome, ToolType, define_tool
 
 if TYPE_CHECKING:
     from ..context import DrissionPageContext
@@ -26,7 +26,7 @@ class PointerDestinationError(ValueError):
     public_message = "Resolved drag destination cannot be negative."
 
 
-class PointerCoordinatesInput(ToolInput):
+class PointerCoordinatesInput(TabScopedInput):
     """Shared input schema for bounded viewport pointer movement."""
 
     x: float = Field(..., ge=0, description="Viewport X coordinate in CSS pixels")
@@ -53,7 +53,7 @@ class PointerWaypointInput(BaseModel):
     y: float = Field(..., ge=0, description="Viewport Y coordinate in CSS pixels")
 
 
-class PointerDragInput(ToolInput):
+class PointerDragInput(TabScopedInput):
     """Input schema for one failure-safe viewport drag action."""
 
     start_x: float = Field(..., ge=0, description="Viewport drag start X in CSS pixels")
@@ -161,7 +161,7 @@ PointerElementDestination = Annotated[
 ]
 
 
-class PointerDragElementInput(ToolInput):
+class PointerDragElementInput(TabScopedInput):
     """Resolve an element and structured destination immediately before dragging."""
 
     source: ElementTargetInput | ElementSourceInput

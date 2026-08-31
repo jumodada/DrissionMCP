@@ -15,19 +15,25 @@ from ..tool_outputs import (
     BrowserPermissionSetData,
     BrowserPermissionsResetData,
 )
-from .base import EmptyInput, ToolInput, ToolOutcome, ToolType, define_tool
+from .base import (
+    TabScopedEmptyInput,
+    TabScopedInput,
+    ToolOutcome,
+    ToolType,
+    define_tool,
+)
 
 if TYPE_CHECKING:
     from ..context import DrissionPageContext
 
 
-class BrowserPermissionGetInput(ToolInput):
+class BrowserPermissionGetInput(TabScopedInput):
     """Query one permission in the current document origin."""
 
     permission: PermissionName
 
 
-class BrowserPermissionSetInput(ToolInput):
+class BrowserPermissionSetInput(TabScopedInput):
     """Set one Chromium permission for one exact HTTP(S) origin."""
 
     permission: PermissionName
@@ -99,14 +105,14 @@ async def browser_permission_set(
     name="browser_permissions_reset",
     title="Reset Browser Permissions",
     description="Reset all Chromium permission overrides in the current browser context.",
-    input_schema=EmptyInput,
+    input_schema=TabScopedEmptyInput,
     tool_type=ToolType.DESTRUCTIVE,
     idempotent=True,
     output_model=BrowserPermissionsResetData,
     failure_message=lambda args, exc: "Failed to reset browser permissions.",
 )
 async def browser_permissions_reset(
-    context: DrissionPageContext, args: EmptyInput
+    context: DrissionPageContext, args: TabScopedEmptyInput
 ) -> ToolOutcome:
     outcome = ToolOutcome()
     tab = context.current_tab_or_die()

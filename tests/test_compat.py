@@ -271,6 +271,54 @@ def test_new_tab_requires_isolated_context_capability_before_creation() -> None:
     assert unsupported.calls == 0
 
 
+def test_new_tab_forwards_background_and_window_semantics() -> None:
+    calls: list[dict[str, object]] = []
+
+    class BrowserWithCreationOptions:
+        def new_tab(
+            self,
+            url=None,
+            *,
+            new_window=False,
+            background=False,
+            new_context=False,
+        ):
+            calls.append(
+                {
+                    "url": url,
+                    "new_window": new_window,
+                    "background": background,
+                    "new_context": new_context,
+                }
+            )
+            return "created-tab"
+
+    assert (
+        compat.new_tab(
+            BrowserWithCreationOptions(),
+            "https://example.test",
+            new_window=True,
+            background=True,
+        )
+        == "created-tab"
+    )
+    assert calls == [
+        {
+            "url": "https://example.test",
+            "new_window": True,
+            "background": True,
+            "new_context": False,
+        }
+    ]
+
+    class BrowserWithoutCreationOptions:
+        def new_tab(self, url=None):
+            return object()
+
+    with pytest.raises(RuntimeError, match="background"):
+        compat.new_tab(BrowserWithoutCreationOptions(), background=True)
+
+
 def test_quit_browser_supports_quit_close_and_none() -> None:
     compat.quit_browser(None)
 

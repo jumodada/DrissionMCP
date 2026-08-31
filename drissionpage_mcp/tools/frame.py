@@ -9,19 +9,19 @@ from pydantic import Field
 from ..limits import MAX_WAIT_SECONDS
 from ..metadata import with_response_meta
 from ..tool_outputs import FrameFindData, FrameListData, FrameSnapshotData
-from .base import ToolInput, ToolOutcome, ToolType, define_tool
+from .base import TabScopedInput, ToolOutcome, ToolType, define_tool
 
 if TYPE_CHECKING:
     from ..context import DrissionPageContext
 
 
-class FrameListInput(ToolInput):
+class FrameListInput(TabScopedInput):
     """Input schema for listing frames."""
 
     limit: int = Field(default=20, ge=1, le=100)
 
 
-class FrameSnapshotInput(ToolInput):
+class FrameSnapshotInput(TabScopedInput):
     """Input schema for frame snapshots."""
 
     frame_selector: str = Field(
@@ -35,7 +35,7 @@ class FrameSnapshotInput(ToolInput):
     timeout: float = Field(default=3, ge=0, le=MAX_WAIT_SECONDS)
 
 
-class FrameFindInput(ToolInput):
+class FrameFindInput(TabScopedInput):
     """Input schema for finding one element inside a frame."""
 
     selector: str = Field(..., description="Selector inside the target frame.")

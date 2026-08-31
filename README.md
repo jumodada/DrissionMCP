@@ -16,7 +16,7 @@
 
 ## 🖱️ Atomic Browser Control with Natural Pointer Motion
 
-**DrissionPage MCP 0.8.6 exposes 69 typed browser capabilities.** The MCP server provides accurate low-level observation and interaction; the client or an optional Skill composes those capabilities for a site, component library, challenge, or business workflow.
+**DrissionPage MCP 0.8.7 exposes 69 typed browser capabilities.** The MCP server provides accurate low-level observation and interaction; the client or an optional Skill composes those capabilities for a site, component library, challenge, or business workflow.
 
 <!-- mcp-name: io.github.jumodada/drissionpage-mcp -->
 
@@ -75,7 +75,7 @@ Designed for authorized browser automation, testing, accessibility workflows, an
 
 **DrissionPage MCP Server** is a local Model Context Protocol (MCP) server that brings DrissionPage browser automation tools to Codex CLI/IDE, Claude Code, Claude Desktop, and other MCP clients.
 
-The standalone server exposes 69 typed tools, zero MCP prompts, and one static optional-Skills catalog resource. Version 0.8.6 keeps that registry stable, hardens public-response redaction, and isolates long network-listener waits from unrelated browser actions. Every tool loads by default; there is no capability profile or opt-in `full` mode. Models compose these atomic capabilities, while reusable challenge and site procedures live outside the distribution as optional Skills. Browser execution is powered by [DrissionPage](https://github.com/g1879/DrissionPage).
+The standalone server exposes 69 typed tools, zero MCP prompts, and one static optional-Skills catalog resource. Version 0.8.7 keeps that registry stable while adding explicit tab targeting, per-tab action isolation, and controlled background/window/context tab creation. Every tool loads by default; there is no capability profile or opt-in `full` mode. Models compose these atomic capabilities, while reusable challenge and site procedures live outside the distribution as optional Skills. Browser execution is powered by [DrissionPage](https://github.com/g1879/DrissionPage).
 
 ### 🌟 Why Choose DrissionPage MCP?
 
@@ -107,7 +107,7 @@ DrissionPage MCP is backed by a strict regression suite and browser-backed scena
 curl -fsSL https://chatgpt.com/codex/install.sh | sh
 
 # Install from PyPI
-python -m pip install -U "drissionpage-mcp>=0.8.6"
+python -m pip install -U "drissionpage-mcp>=0.8.7"
 
 # Verify package and environment
 drissionpage-mcp --version
@@ -180,8 +180,14 @@ For Claude Code, Claude Desktop, and other JSON-based MCP clients, see [Integrat
 
 ## 🛠️ 69 Typed Browser Tools
 
+All 63 tab-scoped tools accept an optional `tab_id`. Omit it to capture the MCP
+current tab once at call start, or pass an MCP/native DrissionPage tab id to
+target explicitly. Successful tab-scoped results return the resolved MCP
+`tab_id`; independent tabs can run concurrently while actions on one tab remain
+serialized.
+
 ### 🌐 Navigation (5 tools)
-- `page_navigate` - Navigate to any URL; optionally open it in a new tab with `new_tab` or return an `observe` change summary
+- `page_navigate` - Navigate to any URL; target an existing `tab_id`, or combine `new_tab=true` with optional `background`, `new_window`, or `new_context`; `observe` returns a change summary
 - `page_navigate_with_http_auth` - Navigate through a scoped HTTP auth challenge in a dedicated disposable Chromium context without returning credentials
 - `page_go_back` - Navigate backward in browser history
 - `page_go_forward` - Navigate forward in browser history
@@ -190,7 +196,7 @@ For Claude Code, Claude Desktop, and other JSON-based MCP clients, see [Integrat
 ### 🗂️ Tab Operations (3 tools)
 - `tab_list` - List open browser tabs with stable MCP tab IDs
 - `tab_switch` - Switch to a tab returned by `tab_list`
-- `tab_close` - Close one tab without closing the whole browser
+- `tab_close` - Reject new work, drain in-flight actions, then close one tab without closing the whole browser
 
 ### 🎯 Element Interaction & Extraction (16 tools)
 - `element_find` - Find one element by CSS selector or XPath; bare selectors like `h1` are treated as CSS
@@ -296,7 +302,9 @@ reviewable procedures outside the server:
 Read the full [Skills guide](docs/skills.md) before publishing a new procedure.
 Skills must use existing typed tools, collect fresh evidence, verify
 postconditions, redact secrets, and state unsupported cases. They do not add
-new MCP tools or override the server's navigation and safety policy.
+new MCP tools or override the server's navigation and safety policy. Multi-tab
+Skills should carry the returned MCP `tab_id` into later tab-scoped calls rather
+than relying on mutable current-tab state.
 
 ---
 
@@ -477,7 +485,7 @@ DP_HEADLESS=1 python playground/run_mcp_lab.py --case form-inspect
 ```bash
 drissionpage-mcp --version
 ```
-Should output the installed package version, for example `drissionpage-mcp 0.8.6`.
+Should output the installed package version, for example `drissionpage-mcp 0.8.7`.
 
 `drissionpage-mcp doctor` must also report both `mcp_supported` and
 `mcp_server_wiring` as `ok`; package-version output alone does not prove that an
@@ -510,13 +518,13 @@ See [docs/troubleshooting.md](docs/troubleshooting.md) for the complete troubles
 | **Package** | ✅ PyPI metadata and build checks |
 | **Status** | 🟡 Beta; real browser behavior depends on local Chrome/Chromium and target sites |
 
-**Version**: 0.8.6 | **License**: Apache 2.0 | **Maintained**: ✅ Active
+**Version**: 0.8.7 | **License**: Apache 2.0 | **Maintained**: ✅ Active
 
 ---
 
 ## 🗺️ Roadmap
 
-### Current (v0.8.6)
+### Current (v0.8.7)
 - [x] 69 atomic navigation, tab/frame/shadow, accessibility, observation, interaction, browser-environment, network, Cookie/storage, wait, and console tools, all loaded by default
 - [x] stdio MCP server integration
 - [x] Doctor diagnostics for local setup
@@ -525,7 +533,8 @@ See [docs/troubleshooting.md](docs/troubleshooting.md) for the complete troubles
 - [x] Sanitized browser failures with `DIALOG_PENDING`/`DIALOG_NOT_FOUND` recovery and strict standards-compliant JSON for non-finite JavaScript values
 - [x] Balanced `page_snapshot` output so link-heavy pages still expose controls and forms
 - [x] Atomic type, select, check, click, keyboard, upload, wait, and state-read tools cover native controls and framework-driven widgets without library-specific branches
-- [x] Tab management with `tab_list`, `tab_switch`, `tab_close`, and `page_navigate(new_tab=true)`
+- [x] Stable optional `tab_id` targeting across 63 tab-scoped tools, per-tab action serialization, cross-tab parallelism, and draining close/cleanup semantics
+- [x] Tab management with `tab_list`, `tab_switch`, `tab_close`, and `page_navigate(new_tab=true, background=..., new_window=..., new_context=...)`
 - [x] Observable actions with `page_observe`, `page_evaluate`, `wait_until`, and optional `observe=true` changes on navigation, click, and type
 - [x] Console observability with `page_console_logs`, console summary in `page_observe`, and console change fields in `observe=true`
 - [x] Form, component-library, challenge, and convenience workflows remain outside the MCP core
@@ -688,11 +697,12 @@ If you find this project useful, please consider:
 
 ---
 
-## 🆕 Latest Version: v0.8.6
+## 🆕 Latest Version: v0.8.7
 
-Released on 2026-08-30. This release keeps the existing 69-tool browser capability contract while hardening privacy and listener concurrency:
+Released on 2026-08-31. This release keeps the 69-tool registry while making multi-tab execution explicit and isolated:
 
-- Applies one redaction boundary to public URLs, credentials, headers, Cookie writes, network bodies, errors, receipts, and text mirrors.
-- Returns metadata-only results for header and Cookie writes, preventing configured values from being echoed into MCP responses.
-- Keeps `network_listen_wait` out of the global action lock and serializes listener lifecycle state per tab, while preserving the existing cleanup and replay contracts.
+- Adds optional `tab_id` to every tab-scoped tool; omission captures the current tab once, and successful results return the resolved MCP id.
+- Replaces the global browser action lane with per-tab action locks, allowing independent tabs to progress concurrently while keeping same-tab actions serialized.
+- Makes `tab_close` and browser cleanup reject new work and drain in-flight tab actions before closing native browser state.
+- Extends `page_navigate(new_tab=true)` with explicit `background`, `new_window`, and disposable `new_context` creation semantics.
 - Keeps the public surface at 69 tools, zero prompts, and one Skills catalog resource. The external Skills catalog remains pinned to `skills-manager` `v0.8.4`.

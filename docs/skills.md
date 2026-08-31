@@ -34,6 +34,8 @@ Every Skill should:
    postconditions instead of trusting a click result.
 5. Describe unsupported cases and a stop condition.
 6. Prefer deterministic local fixtures for repeatable tests.
+7. In multi-tab flows, carry the MCP `tab_id` returned by a successful tool into
+   later tab-scoped calls instead of depending on mutable current-tab state.
 
 Skills must not add browser capabilities, silently change safety policy, or echo
 secrets. Site-specific challenge and business decisions belong in the Skill or
@@ -68,7 +70,7 @@ tool calls against the connected DrissionPage MCP server:
 ```text
 Repository: https://github.com/jumodada/skills-manager/tree/v0.8.4
 Skill: skills/xiaohongshu-content-research/SKILL.md
-Core server minimum: drissionpage-mcp 0.8.4; current release: 0.8.6
+Core server minimum: drissionpage-mcp 0.8.4; current release: 0.8.7
 ```
 
 For release validation, install a built wheel or sdist in a clean environment,

@@ -5,14 +5,14 @@ from typing import TYPE_CHECKING, Literal
 from pydantic import Field
 
 from ..tool_outputs import ConsoleLogsData
-from .base import ToolInput, ToolOutcome, ToolType, define_tool
+from .base import TabScopedInput, ToolOutcome, ToolType, define_tool
 
 if TYPE_CHECKING:
     from ..context import DrissionPageContext
 ConsoleLevel = Literal["all", "error", "warning", "warn", "info", "log"]
 
 
-class ConsoleLogsInput(ToolInput):
+class ConsoleLogsInput(TabScopedInput):
     """Input schema for reading current-tab console logs."""
 
     level: ConsoleLevel = Field(

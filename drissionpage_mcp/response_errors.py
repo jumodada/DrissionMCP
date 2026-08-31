@@ -31,6 +31,8 @@ class ErrorCode(str, Enum):
     AMBIGUOUS_TARGET = "AMBIGUOUS_TARGET"
     DIALOG_PENDING = "DIALOG_PENDING"
     DIALOG_NOT_FOUND = "DIALOG_NOT_FOUND"
+    TAB_NOT_FOUND = "TAB_NOT_FOUND"
+    TAB_CLOSED = "TAB_CLOSED"
 
 
 _UPSTREAM_EXCEPTION_CODES = {
@@ -157,6 +159,8 @@ _PUBLIC_EXCEPTION_MESSAGES: dict[ErrorCode, str] = {
     ErrorCode.DIALOG_NOT_FOUND: (
         "No pending JavaScript dialog is available to respond to."
     ),
+    ErrorCode.TAB_NOT_FOUND: "The requested browser tab was not found.",
+    ErrorCode.TAB_CLOSED: "The requested browser tab is closed or closing.",
 }
 
 _VERSION_SUFFIX_RE = re.compile(

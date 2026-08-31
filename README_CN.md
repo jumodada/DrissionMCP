@@ -16,7 +16,7 @@
 
 ## 🖱️ 带自然指针轨迹的原子化浏览器控制
 
-**DrissionPage MCP 0.8.6 提供 69 个类型化浏览器能力。** MCP 服务负责准确的底层观察与操作，客户端或可选 Skill 负责组合站点、组件库、挑战与业务流程。
+**DrissionPage MCP 0.8.7 提供 69 个类型化浏览器能力。** MCP 服务负责准确的底层观察与操作，客户端或可选 Skill 负责组合站点、组件库、挑战与业务流程。
 
 > **模型决定做什么，MCP 严格执行请求的浏览器操作。**
 
@@ -73,7 +73,7 @@ page_click_xy(x=442, y=369, profile="natural")
 
 **DrissionPage MCP Server** 是一个本地模型上下文协议（MCP）服务器，为 Codex CLI/IDE、Claude Code、Claude Desktop 和其他 MCP 客户端提供 DrissionPage 浏览器自动化工具。
 
-独立服务提供 69 个类型化工具、零个 MCP Prompt 和一个静态可选 Skills 目录资源。0.8.6 保持这套注册表稳定，强化公共结果脱敏，并将长时间 network listener 等待与无关浏览器操作隔离。全部工具默认加载，不存在能力 profile 或需要选择的 `full` 模式。模型组合这些原子能力，挑战与站点流程以可选 Skill 形式放在发行包之外。浏览器执行由 [DrissionPage](https://github.com/g1879/DrissionPage) 提供。
+独立服务提供 69 个类型化工具、零个 MCP Prompt 和一个静态可选 Skills 目录资源。0.8.7 保持这套注册表稳定，同时加入显式 tab 定位、逐 tab action 隔离，以及受控的后台/新窗口/新 context 标签页创建。全部工具默认加载，不存在能力 profile 或需要选择的 `full` 模式。模型组合这些原子能力，挑战与站点流程以可选 Skill 形式放在发行包之外。浏览器执行由 [DrissionPage](https://github.com/g1879/DrissionPage) 提供。
 
 ### 🌟 为什么选择 DrissionPage MCP？
 
@@ -105,7 +105,7 @@ DrissionPage MCP 有严格的回归测试和真实浏览器场景验证：
 curl -fsSL https://chatgpt.com/codex/install.sh | sh
 
 # 从 PyPI 安装
-python -m pip install -U "drissionpage-mcp>=0.8.6"
+python -m pip install -U "drissionpage-mcp>=0.8.7"
 
 # 验证包和本地环境
 drissionpage-mcp --version
@@ -177,8 +177,10 @@ Claude Code、Claude Desktop 和其他 JSON 配置 MCP 客户端见[集成示例
 
 ## 🛠️ 69 个类型化浏览器工具
 
+全部 63 个 tab-scoped 工具都接受可选 `tab_id`。省略时会在调用开始时一次性捕获 MCP 当前 tab；也可以传入 MCP 或 DrissionPage native tab id 显式定位。成功结果会返回解析后的 MCP `tab_id`；不同 tab 可并行，同一 tab 的 action 保持串行。
+
 ### 🌐 导航工具（5 个）
-- `page_navigate` - 导航到任意 URL；可用 `new_tab` 在新标签页打开，也可用 `observe` 返回变化摘要
+- `page_navigate` - 导航到任意 URL；可定位已有 `tab_id`，或组合 `new_tab=true` 与可选 `background`、`new_window`、`new_context`；`observe` 返回变化摘要
 - `page_navigate_with_http_auth` - 在专用可销毁 Chromium context 中完成限定范围的 HTTP Auth 导航，且不回显凭证
 - `page_go_back` - 返回浏览器历史上一页
 - `page_go_forward` - 前进到浏览器历史下一页
@@ -187,7 +189,7 @@ Claude Code、Claude Desktop 和其他 JSON 配置 MCP 客户端见[集成示例
 ### 🗂️ 标签页工具（3 个）
 - `tab_list` - 列出当前打开的浏览器标签页和稳定 MCP tab ID
 - `tab_switch` - 切换到 `tab_list` 返回的标签页
-- `tab_close` - 关闭单个标签页，不关闭整个浏览器
+- `tab_close` - 拒绝新调用、排空在途 action，再关闭单个标签页而不关闭整个浏览器
 
 ### 🎯 元素交互与提取（16 个）
 - `element_find` - 通过 CSS 选择器或 XPath 查找单个元素；`h1` 等裸选择器按 CSS 处理
@@ -291,7 +293,8 @@ MCP 核心提供原子浏览器操作，Skills 在服务之外提供可审阅、
 
 完整规范见 [Skills 指南](docs/skills.md)。Skill 必须复用已有 typed
 tools，采集新证据，验证后置条件，脱敏秘密并声明不支持场景；不能新增 MCP
-工具或覆盖服务器的导航与安全策略。
+工具或覆盖服务器的导航与安全策略。多 tab Skill 应将成功结果返回的 MCP
+`tab_id` 传给后续 tab-scoped 调用，不要依赖可变的 current tab。
 
 ---
 
@@ -472,7 +475,7 @@ DP_HEADLESS=1 python playground/run_mcp_lab.py --case form-inspect
 ```bash
 drissionpage-mcp --version
 ```
-应输出已安装的包版本，例如：`drissionpage-mcp 0.8.6`。
+应输出已安装的包版本，例如：`drissionpage-mcp 0.8.7`。
 
 `drissionpage-mcp doctor` 还必须将 `mcp_supported` 和
 `mcp_server_wiring` 都报告为 `ok`；只看到版本号并不能证明 MCP 客户端能够完成初始化。
@@ -504,13 +507,13 @@ which chromium         # macOS
 | **包** | ✅ PyPI 元数据和构建检查 |
 | **状态** | 🟡 Beta；真实浏览器行为取决于本地 Chrome/Chromium 和目标站点 |
 
-**版本**: 0.8.6 | **许可证**: Apache 2.0 | **维护**: ✅ 活跃
+**版本**: 0.8.7 | **许可证**: Apache 2.0 | **维护**: ✅ 活跃
 
 ---
 
 ## 🗺️ 路线图
 
-### 当前版本 (v0.8.6)
+### 当前版本 (v0.8.7)
 - [x] 69 个默认加载的原子导航、标签页/frame/shadow、accessibility、观察、交互、浏览器环境、网络、Cookie/storage、等待与 console 工具
 - [x] stdio MCP 服务器集成
 - [x] 本地环境 doctor 诊断
@@ -519,7 +522,8 @@ which chromium         # macOS
 - [x] 浏览器异常公开信息脱敏，提供 `DIALOG_PENDING`/`DIALOG_NOT_FOUND` 恢复路径，并为 JavaScript 非有限数提供严格 JSON 结果
 - [x] `page_snapshot` 会平衡输出预算，链接密集页面仍能暴露按钮、输入框和表单
 - [x] 输入、选择、勾选、点击、键盘、上传、等待和状态读取原语覆盖原生控件与框架驱动组件，不包含组件库专用分支
-- [x] 标签页管理：`tab_list`、`tab_switch`、`tab_close` 和 `page_navigate(new_tab=true)`
+- [x] 63 个 tab-scoped 工具统一支持可选 `tab_id`，同 tab action 串行、跨 tab 并行，并为 close/cleanup 提供排空语义
+- [x] 标签页管理：`tab_list`、`tab_switch`、`tab_close` 和 `page_navigate(new_tab=true, background=..., new_window=..., new_context=...)`
 - [x] 可观察动作：`page_observe`、`page_evaluate`、`wait_until`，以及导航、点击、输入中的可选 `observe=true` 变化摘要
 - [x] Console 可观察性：`page_console_logs`、`page_observe` 中的 console 摘要，以及 `observe=true` 中的 console 变化字段
 - [x] 表单、组件库、验证挑战和便利工作流留在 MCP 核心之外
@@ -682,11 +686,12 @@ codex mcp list
 
 ---
 
-## 🆕 最新版本：v0.8.6
+## 🆕 最新版本：v0.8.7
 
-发布日期：2026-08-30。本版本保持现有 69 个浏览器工具合同，同时强化隐私与 listener 并发：
+发布日期：2026-08-31。本版本保持 69 个工具注册表，同时明确并隔离多标签页执行：
 
-- 为公共 URL、凭证、header、Cookie 写入、network body、错误、receipt 和文本镜像建立统一脱敏边界。
-- header 与 Cookie 写入结果只保留安全元数据，避免配置值进入 MCP 响应。
-- `network_listen_wait` 不再占用全局 action lock，并按 tab 串行化 listener 生命周期，同时保留既有 cleanup 与 replay 合同。
+- 所有 tab-scoped 工具新增可选 `tab_id`；省略时只在调用开始捕获 current tab，成功结果返回解析后的 MCP id。
+- 用逐 tab action lock 取代全局 action lane，不同 tab 可并行，同一 tab 保持串行。
+- `tab_close` 与浏览器 cleanup 会拒绝新工作并等待在途 tab action 完成后再关闭 native 状态。
+- `page_navigate(new_tab=true)` 增加明确的 `background`、`new_window` 和可销毁 `new_context` 创建语义。
 - 公共面仍为 69 tools、0 prompts、1 Skills catalog resource；外部 Skills catalog 继续固定在 `skills-manager` `v0.8.4`。

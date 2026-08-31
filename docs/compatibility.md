@@ -18,7 +18,7 @@ DrissionPage MCP follows a conservative compatibility policy for Python, Drissio
   cleanup release that removes the two 0.3.x alias names listed below; future
   removals must be documented in release notes and migration guidance.
 - DrissionPage 5.x beta/internal builds are not supported by DrissionPage MCP
-  0.8.6. Keep MCP installs pinned to `DrissionPage>=4.1.1.4,<5` until a
+  0.8.7. Keep MCP installs pinned to `DrissionPage>=4.1.1.4,<5` until a
   separate compatibility plan is implemented.
 - Input schema changes should be backward compatible when possible. The 0.4.1 `element_get_property` `property_name` -> `property` cleanup is a documented beta-stage breaking schema correction for LLM usability.
 - Unknown input fields are rejected rather than silently ignored. Update saved
@@ -53,7 +53,37 @@ introducing a new workflow surface.
   remains the only value-bearing storage/Cookie read opt-in.
 - `network_listen_wait` no longer occupies the server-wide browser action lock.
   Listener state on one tab remains serialized across start, wait, and stop.
-  Per-tab action targeting and locks remain planned for 0.8.7.
+  Per-tab action targeting and locks are added by 0.8.7 below.
+
+## 0.8.6 to 0.8.7 Migration
+
+0.8.7 keeps all 69 tool names, zero prompts, one Skills catalog resource, and
+the `DrissionPage>=4.1.1.4,<5` dependency range. The public schema change is
+backward compatible: 63 tab-scoped tools add an optional `tab_id`, and their
+successful output `data` now requires the resolved MCP tab id.
+
+- Existing calls that omit `tab_id` still use the current tab, but resolve it
+  once at call start. A concurrent `tab_switch` cannot redirect an in-flight
+  operation.
+- Pass the MCP id returned by `tab_list` or a previous successful tab-scoped
+  result to target explicitly. Native DrissionPage tab ids are also accepted;
+  results normalize them back to the stable MCP id.
+- The server serializes actions per tab rather than globally. Independent tabs
+  may progress concurrently, while one tab's actions remain ordered.
+- `tab_close` rejects new calls after closing begins and waits for already
+  claimed work. Whole-browser cleanup drains every tracked tab before quitting.
+- `page_navigate(new_tab=true)` adds `background`, `new_window`, and
+  `new_context`. These options require `new_tab=true`; `tab_id` cannot be mixed
+  with new-tab creation. Background tabs do not replace the MCP current tab,
+  and `new_context` is disposed by `tab_close`.
+- New target lifecycle failures use `TAB_NOT_FOUND` and `TAB_CLOSED`.
+- Artifact export and click-download `operation_key` replay is scoped to the
+  resolved tab identity. Reusing a key on another tab is an
+  `OPERATION_KEY_CONFLICT`, not a replay of the original artifact or receipt.
+
+Existing external Skills remain compatible because `tab_id` is optional. A
+multi-tab Skill should nevertheless pass the returned MCP `tab_id` to later
+tab-scoped calls so its target does not depend on shared current-tab state.
 
 ## 0.8.3 to 0.8.4 Migration
 

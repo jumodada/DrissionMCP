@@ -158,6 +158,40 @@ async def test_new_tab_tracks_new_page_and_makes_it_current(monkeypatch) -> None
 
 
 @pytest.mark.asyncio
+async def test_new_background_tab_is_tracked_without_changing_current(
+    monkeypatch,
+) -> None:
+    context = DrissionPageContext()
+    context._is_initialized = True
+    context._browser = FakeBrowser()
+    current = context._wrap_page(FakePage("current"))
+    context._tabs = [current]
+    context._current_tab = current
+    created = FakePage("background")
+    calls = []
+
+    def fake_new_tab(_browser, **kwargs):
+        calls.append(kwargs)
+        return created
+
+    monkeypatch.setattr("drissionpage_mcp.context.new_tab", fake_new_tab)
+
+    tab = await context.new_tab(background=True, new_window=True)
+
+    assert calls == [
+        {
+            "url": None,
+            "background": True,
+            "new_window": True,
+            "new_context": False,
+        }
+    ]
+    assert tab.native_tab_id == "background"
+    assert context.current_tab() is current
+    assert context.tabs() == [current, tab]
+
+
+@pytest.mark.asyncio
 async def test_sync_tabs_discovers_external_browser_tabs_and_switches() -> None:
     browser = FakeBrowser()
     browser.pages = {

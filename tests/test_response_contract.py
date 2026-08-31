@@ -359,6 +359,7 @@ def test_tool_result_output_schema_validates_real_payloads() -> None:
 def test_page_understanding_output_schemas_validate_success_payloads() -> None:
     snapshot_payload = ToolResult.success(
         "Captured page snapshot",
+        tab_id="t0",
         url="https://example.test/catalog",
         title="Catalog",
         text_excerpt="Alpha Beta",
@@ -374,6 +375,7 @@ def test_page_understanding_output_schemas_validate_success_payloads() -> None:
     ).to_dict()
     find_all_payload = ToolResult.success(
         "Found 1 of 1 elements: .card",
+        tab_id="t0",
         selector=".card",
         locator="css:.card",
         selector_strategy="css",
@@ -400,6 +402,7 @@ def test_page_understanding_output_schemas_validate_success_payloads() -> None:
 def test_0_5_5_output_schemas_validate_new_capability_payloads() -> None:
     upload_payload = ToolResult.success(
         "Uploaded 1 file",
+        tab_id="t0",
         selector="#upload",
         locator="css:#upload",
         selector_strategy="css",
@@ -410,6 +413,7 @@ def test_0_5_5_output_schemas_validate_new_capability_payloads() -> None:
     ).to_dict()
     frame_payload = ToolResult.success(
         "Captured frame snapshot",
+        tab_id="t0",
         frame={
             "index": 0,
             "selector": "#fixture-frame",
@@ -471,6 +475,7 @@ def test_0_5_5_output_schemas_validate_new_capability_payloads() -> None:
     ).to_dict()
     storage_payload = ToolResult.success(
         "Read local storage",
+        tab_id="t0",
         area="local",
         key="",
         include_values=True,
@@ -502,6 +507,7 @@ def test_page_dialog_respond_output_schema_validates_redacted_receipt() -> None:
     }
     payload = ToolResult.success(
         "Handled pending prompt dialog with action accept",
+        tab_id="t0",
         dialog_type="prompt",
         action="accept",
         handled=True,
@@ -567,6 +573,7 @@ def test_click_and_download_output_schema_validates_artifact_receipt_link() -> N
     }
     payload = ToolResult.success(
         "Downloaded one integrity-checked artifact",
+        tab_id="t0",
         status="success",
         operation_key="download-report-1",
         selector="#download",
@@ -653,6 +660,7 @@ def _click_and_download_error_payload() -> dict[str, object]:
             "details": {},
         },
         "data": {
+            "tab_id": "t0",
             "status": "failed",
             "operation_key": "download-report-1",
             "selector": "#download",
@@ -778,6 +786,7 @@ def test_click_and_download_output_schema_rejects_contradictory_shapes(
     }
     payload = ToolResult.success(
         "Download result",
+        tab_id="t0",
         status=data_status,
         operation_key="download-report-1",
         selector="#download",
@@ -861,6 +870,7 @@ def test_observable_action_output_schemas_validate_success_payloads() -> None:
     }
     observe_payload = ToolResult.success(
         "Observed page state",
+        tab_id="t0",
         url="https://example.test",
         title="Observable",
         ready_state="complete",
@@ -891,6 +901,7 @@ def test_observable_action_output_schemas_validate_success_payloads() -> None:
     ).to_dict()
     console_payload = ToolResult.success(
         "Read 1 console log",
+        tab_id="t0",
         available=True,
         listening=True,
         count=1,
@@ -910,6 +921,7 @@ def test_observable_action_output_schemas_validate_success_payloads() -> None:
     ).to_dict()
     evaluate_payload = ToolResult.success(
         "Evaluated JavaScript",
+        tab_id="t0",
         result={"status": "ready"},
         result_type="object",
         truncated=False,
@@ -926,6 +938,7 @@ def test_observable_action_output_schemas_validate_success_payloads() -> None:
     ).to_dict()
     click_payload = ToolResult.success(
         "Successfully clicked element",
+        tab_id="t0",
         selector="#save",
         locator="css:#save",
         selector_strategy="css",
@@ -937,6 +950,7 @@ def test_observable_action_output_schemas_validate_success_payloads() -> None:
     ).to_dict()
     type_payload = ToolResult.success(
         "Successfully typed text",
+        tab_id="t0",
         selector="#name",
         locator="css:#name",
         selector_strategy="css",
@@ -947,6 +961,7 @@ def test_observable_action_output_schemas_validate_success_payloads() -> None:
     ).to_dict()
     wait_payload = ToolResult.success(
         "Condition matched",
+        tab_id="t0",
         condition="clickable",
         selector="#save",
         value="",
@@ -981,6 +996,7 @@ def test_network_schemas_validate_success_payloads() -> None:
     ).to_dict()
     wait_payload = ToolResult.success(
         "Captured 1 network packet",
+        tab_id="t0",
         listening=True,
         timed_out=False,
         count=1,
@@ -1005,7 +1021,11 @@ def test_network_schemas_validate_success_payloads() -> None:
         meta={"approx_tokens": 10, "json_chars": 35, "truncated": False},
     ).to_dict()
     stop_payload = ToolResult.success(
-        "Stopped network listener", listening=False, was_listening=True, cleared=True
+        "Stopped network listener",
+        tab_id="t0",
+        listening=False,
+        was_listening=True,
+        cleared=True,
     ).to_dict()
     validate(start_payload, tool_result_output_schema("network_listen_start"))
     validate(wait_payload, tool_result_output_schema("network_listen_wait"))

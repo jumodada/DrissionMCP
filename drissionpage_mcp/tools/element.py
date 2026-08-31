@@ -25,13 +25,13 @@ from ..tool_outputs import (
     ElementTypeData,
 )
 from ._observe import maybe_observe, observed_changes
-from .base import ToolInput, ToolOutcome, ToolType, define_tool
+from .base import TabScopedInput, ToolOutcome, ToolType, define_tool
 
 if TYPE_CHECKING:
     from ..context import DrissionPageContext
 
 
-class FindElementInput(ToolInput):
+class FindElementInput(TabScopedInput):
     """Input schema for finding elements."""
 
     selector: ElementTargetArg = Field(
@@ -46,7 +46,7 @@ class FindElementInput(ToolInput):
     )
 
 
-class FindAllElementsInput(ToolInput):
+class FindAllElementsInput(TabScopedInput):
     """Input schema for bounded multi-element extraction."""
 
     selector: ElementTargetArg = Field(
@@ -65,7 +65,7 @@ class FindAllElementsInput(ToolInput):
     )
 
 
-class ClickElementInput(ToolInput):
+class ClickElementInput(TabScopedInput):
     """Input schema for clicking elements."""
 
     selector: ElementTargetArg = Field(
@@ -89,7 +89,7 @@ class ClickElementInput(ToolInput):
     )
 
 
-class TypeTextInput(ToolInput):
+class TypeTextInput(TabScopedInput):
     """Input schema for typing text."""
 
     selector: ElementTargetArg = Field(
@@ -111,7 +111,7 @@ class TypeTextInput(ToolInput):
     )
 
 
-class GetTextInput(ToolInput):
+class GetTextInput(TabScopedInput):
     """Input schema for getting text."""
 
     selector: PageOrElementTargetArg = Field(
@@ -120,7 +120,7 @@ class GetTextInput(ToolInput):
     )
 
 
-class GetAttributeInput(ToolInput):
+class GetAttributeInput(TabScopedInput):
     """Input schema for getting an element attribute."""
 
     selector: ElementTargetArg = Field(
@@ -130,7 +130,7 @@ class GetAttributeInput(ToolInput):
     attribute: str = Field(..., description="Attribute name to retrieve")
 
 
-class GetPropertyInput(ToolInput):
+class GetPropertyInput(TabScopedInput):
     """Input schema for getting a live DOM property."""
 
     selector: ElementTargetArg = Field(
@@ -140,7 +140,7 @@ class GetPropertyInput(ToolInput):
     property: str = Field(..., description="DOM property to retrieve, e.g. value")
 
 
-class GetHtmlInput(ToolInput):
+class GetHtmlInput(TabScopedInput):
     """Input schema for getting HTML."""
 
     selector: PageOrElementTargetArg = Field(
@@ -149,7 +149,7 @@ class GetHtmlInput(ToolInput):
     )
 
 
-class ElementStateInput(ToolInput):
+class ElementStateInput(TabScopedInput):
     """Input schema for inspecting element state and geometry."""
 
     selector: ElementTargetArg = Field(

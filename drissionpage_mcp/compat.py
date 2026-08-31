@@ -131,29 +131,55 @@ def new_tab(
     browser: Any,
     url: str | None = None,
     *,
+    background: bool = False,
+    new_window: bool = False,
     new_context: bool = False,
 ) -> Any:
-    """Create a new tab across DrissionPage 4.1/4.2 signature differences."""
+    """Create a new tab across DrissionPage 4.x signature differences."""
 
     if not hasattr(browser, "new_tab"):
-        if new_context:
+        if any((new_context, background, new_window)):
+            if new_context:
+                raise RuntimeError(
+                    "This DrissionPage runtime cannot create an isolated browser context."
+                )
             raise RuntimeError(
-                "This DrissionPage runtime cannot create an isolated browser context."
+                "This DrissionPage runtime cannot honor the requested tab creation options."
             )
         return get_latest_tab(browser)
 
     try:
-        if new_context:
-            if not accepts_parameters(browser.new_tab, "new_context"):
+        requested = {
+            "new_window": bool(new_window),
+            "background": bool(background),
+            "new_context": bool(new_context),
+        }
+        if any(requested.values()):
+            supported = {
+                name: value
+                for name, value in requested.items()
+                if accepts_parameters(browser.new_tab, name)
+            }
+            missing = [
+                name
+                for name, value in requested.items()
+                if value and name not in supported
+            ]
+            if missing:
+                if "new_context" in missing:
+                    raise RuntimeError(
+                        "This DrissionPage runtime cannot create an isolated browser context."
+                    )
                 raise RuntimeError(
-                    "This DrissionPage runtime cannot create an isolated browser context."
+                    "This DrissionPage runtime cannot honor tab creation option(s): "
+                    + ", ".join(missing)
                 )
-            return browser.new_tab(url=url, new_context=True)
+            return browser.new_tab(url=url, **supported)
         return browser.new_tab(url=url)
     except TypeError:
-        if new_context:
+        if any((new_context, background, new_window)):
             raise RuntimeError(
-                "This DrissionPage runtime cannot create an isolated browser context."
+                "This DrissionPage runtime cannot honor the requested tab creation options."
             ) from None
         return browser.new_tab(url)
 

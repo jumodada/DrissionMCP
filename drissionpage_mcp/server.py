@@ -28,7 +28,7 @@ from .resources import read_resource as read_resource_definition
 from .response_errors import ErrorCode, classify_error, public_failure_message
 from .tools import ToolSpec as DrissionTool
 from .tools import get_all_tools
-from .tools.base import ToolExecutionMode, ToolOutcome, ToolType
+from .tools.base import ToolExecutionMode, ToolOutcome, ToolTargetScope, ToolType
 
 logger = logging.getLogger(__name__)
 
@@ -113,24 +113,24 @@ class DrissionPageMCPServer:
             try:
                 context = await self._begin_tool_call()
                 call_started = True
-                if (
-                    name in _CONCURRENT_DIALOG_TOOLS
-                    or tool.execution_mode is ToolExecutionMode.CONCURRENT
-                ):
-                    outcome = await tool.execute(context, validated_args)
-                else:
-                    async with self._execution_lock:
-                        outcome = await tool.execute(context, validated_args)
+                outcome = await self._execute_with_scope(
+                    name, tool, context, validated_args
+                )
                 return self._call_result(outcome)
             except Exception as e:
                 logger.error("Error executing tool %s (%s)", name, type(e).__name__)
                 error_code = classify_error(e, name)
                 outcome = ToolOutcome()
+                candidate = (
+                    tool.failure_message(validated_args, e)
+                    if tool.failure_message is not None
+                    else f"Error executing tool {name}: {e}"
+                )
                 outcome.add_error(
                     public_failure_message(
                         e,
                         error_code,
-                        f"Error executing tool {name}: {e}",
+                        candidate,
                     ),
                     error_code,
                     tool_name=name,
@@ -162,6 +162,47 @@ class DrissionPageMCPServer:
             ListResourcesRequest,
             ReadResourceRequest,
         )
+
+    async def _execute_with_scope(
+        self,
+        name: str,
+        tool: DrissionTool,
+        context: DrissionPageContext,
+        args: Any,
+    ) -> ToolOutcome:
+        """Schedule one call according to its browser-object lifetime.
+
+        Tab-scoped tools use the target captured from ``args.tab_id`` (or the
+        current tab at call start) and claim only that tab's action lock. Browser
+        and context lifecycle tools retain the historical global lane. Dialog
+        observation/response intentionally bind a tab without serializing its
+        action lock so a native modal can overlap the action that opens it.
+        """
+
+        if name == "page_navigate":
+            if bool(getattr(args, "new_tab", False)):
+                # The handler creates and claims the new PageTab itself. There is
+                # no pre-existing target to resolve, and context.new_tab()
+                # protects the short browser creation lifecycle.
+                return await tool.execute(context, args)
+            await context.ensure_tab()
+            async with context.tab_action(getattr(args, "tab_id", None)):
+                return await tool.execute(context, args)
+
+        tab_action = getattr(type(context), "tab_action", None)
+        if tool.target_scope is ToolTargetScope.TAB and callable(tab_action):
+            tab_id = getattr(args, "tab_id", None)
+            serialized = name not in _CONCURRENT_DIALOG_TOOLS
+            async with context.tab_action(tab_id, serialized=serialized):
+                return await tool.execute(context, args)
+
+        if (
+            name in _CONCURRENT_DIALOG_TOOLS
+            or tool.execution_mode is ToolExecutionMode.CONCURRENT
+        ):
+            return await tool.execute(context, args)
+        async with self._execution_lock:
+            return await tool.execute(context, args)
 
     def _tool_to_mcp_tool(self, tool: DrissionTool) -> Tool:
         """Convert an internal tool definition to an MCP SDK Tool model."""

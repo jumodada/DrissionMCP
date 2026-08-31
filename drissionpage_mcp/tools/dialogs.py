@@ -22,7 +22,7 @@ from ..tool_outputs import (
     PageDialogObserveData,
     PageDialogRespondData,
 )
-from .base import ToolInput, ToolOutcome, ToolType, define_tool
+from .base import TabScopedInput, ToolOutcome, ToolType, define_tool
 
 if TYPE_CHECKING:
     from ..context import DrissionPageContext
@@ -31,7 +31,7 @@ if TYPE_CHECKING:
 PromptText = Annotated[StrictStr, Field(max_length=4000)]
 
 
-class PageDialogRespondInput(ToolInput):
+class PageDialogRespondInput(TabScopedInput):
     """Strict response for one currently pending JavaScript dialog."""
 
     action: Literal["accept", "dismiss"]
@@ -56,7 +56,7 @@ class PageDialogRespondInput(ToolInput):
         return self
 
 
-class PageDialogObserveInput(ToolInput):
+class PageDialogObserveInput(TabScopedInput):
     """Bounded wait for a native JavaScript dialog without responding to it."""
 
     timeout: float = Field(

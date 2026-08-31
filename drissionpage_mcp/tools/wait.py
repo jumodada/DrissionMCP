@@ -13,13 +13,13 @@ from ..tool_outputs import (
     WaitTimeData,
     WaitUntilData,
 )
-from .base import ToolInput, ToolOutcome, ToolType, define_tool
+from .base import TabScopedInput, ToolInput, ToolOutcome, ToolType, define_tool
 
 if TYPE_CHECKING:
     from ..context import DrissionPageContext
 
 
-class WaitElementInput(ToolInput):
+class WaitElementInput(TabScopedInput):
     """Input schema for waiting for elements."""
 
     selector: ElementTargetArg = Field(
@@ -39,7 +39,7 @@ class WaitTimeInput(ToolInput):
     )
 
 
-class WaitUrlInput(ToolInput):
+class WaitUrlInput(TabScopedInput):
     """Input schema for waiting for URL changes."""
 
     url_pattern: str = Field(
@@ -50,7 +50,7 @@ class WaitUrlInput(ToolInput):
     )
 
 
-class WaitUntilInput(ToolInput):
+class WaitUntilInput(TabScopedInput):
     """Input schema for generalized observable waits."""
 
     condition: Literal[

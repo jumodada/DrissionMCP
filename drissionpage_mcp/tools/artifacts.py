@@ -20,7 +20,7 @@ from ..browser.artifacts import (
 from ..policy import PolicyDeniedError, SafetyPolicy
 from ..response_errors import ErrorCode
 from ..tool_outputs import ActionReceipt, ArtifactRef, PageExportArtifactData
-from .base import ToolInput, ToolOutcome, ToolType, define_tool
+from .base import TabScopedInput, ToolOutcome, ToolType, define_tool, identity_tab_id
 
 if TYPE_CHECKING:
     from ..context import DrissionPageContext
@@ -42,7 +42,7 @@ PageRanges = Annotated[
 MAX_PAGE_EXPORT_BYTES = 50 * 1024 * 1024
 
 
-class PageExportArtifactInput(ToolInput):
+class PageExportArtifactInput(TabScopedInput):
     """Create one managed PDF or MHTML artifact from the current page."""
 
     format: Literal["pdf", "mhtml"]
@@ -178,6 +178,7 @@ async def page_export_artifact(
                 "format": args.format,
                 "artifact": artifact,
                 "receipt": receipt.model_dump(mode="json"),
+                "tab_id": receipt.tab_id,
             }
         ).model_dump(mode="json")
         context.complete_artifact_operation(
@@ -238,12 +239,13 @@ def _export_identity(
 ) -> tuple[str, str, str]:
     action_id = context.new_action_id()
     operation_key = args.operation_key or f"page-export-{action_id}"
+    resolved_tab_id = identity_tab_id(context, args.tab_id, operation_key)
+    request = args.model_dump(mode="json")
+    request["tab_id"] = resolved_tab_id
+    request["operation_key"] = operation_key
+    request["resolved_tab_id"] = resolved_tab_id
     fingerprint = context.request_fingerprint(
-        {
-            "tool": "page_export_artifact",
-            **args.model_dump(mode="json"),
-            "operation_key": operation_key,
-        }
+        {"tool": "page_export_artifact", **request}
     )
     return action_id, operation_key, fingerprint
 
@@ -290,6 +292,7 @@ def _export_failure_data(
         "format": export_format,
         "artifact": None,
         "receipt": receipt.model_dump(mode="json"),
+        "tab_id": receipt.tab_id,
     }
 
 

@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.7] - 2026-08-31
+
+### Added
+- Added optional `tab_id` targeting to all 63 tab-scoped tools. MCP and native
+  DrissionPage tab ids are accepted, while successful results normalize to the
+  stable MCP id.
+- Added `background`, `new_window`, and disposable `new_context` creation
+  options to `page_navigate(new_tab=true)`.
+- Added stable `TAB_NOT_FOUND` and `TAB_CLOSED` lifecycle errors.
+
+### Changed
+- Captured the implicit current tab once at call start so concurrent
+  `tab_switch` calls cannot redirect in-flight work.
+- Replaced the global action lane for tab-scoped calls with per-tab action
+  locks: independent tabs can progress concurrently and same-tab actions remain
+  serialized.
+- Made `tab_close` reject new work and drain claimed actions before closing;
+  whole-browser cleanup drains every tracked tab before quitting Chromium.
+- Preserved the MCP current tab across browser synchronization and background
+  tab creation. Closing a disposable-context tab also disposes its context.
+- Bound artifact export and click-download exact-once fingerprints to the
+  resolved tab, so reusing an operation key on another tab reports a conflict
+  instead of replaying the first tab's receipt.
+
+### Verification
+- Added target binding, unknown/closed target, cross-tab parallelism, same-tab
+  serialization, close/cleanup drain, navigation creation, public schema, and
+  typed-output regressions without adding a public tool name.
+
 ## [0.8.6] - 2026-08-30
 
 ### Security
@@ -670,7 +699,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Fixed` for any bug fixes
 - `Security` in case of vulnerabilities
 
-[Unreleased]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.6...HEAD
+[Unreleased]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.7...HEAD
+[0.8.7]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.6...0.8.7
 [0.8.6]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.5...0.8.6
 [0.8.5]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.4...0.8.5
 [0.8.4]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.3...0.8.4

@@ -12,10 +12,28 @@
       "additionalProperties": false,
       "description": "Input schema for navigate tool.",
       "properties": {
+        "background": {
+          "default": false,
+          "description": "Create the requested new tab in the background without changing the MCP current tab. Requires new_tab=true.",
+          "title": "Background",
+          "type": "boolean"
+        },
+        "new_context": {
+          "default": false,
+          "description": "Create the requested new tab in a disposable Chromium browser context. Closing the tab disposes that context. Requires new_tab=true.",
+          "title": "New Context",
+          "type": "boolean"
+        },
         "new_tab": {
           "default": false,
           "description": "Open the URL in a new browser tab instead of the current tab.",
           "title": "New Tab",
+          "type": "boolean"
+        },
+        "new_window": {
+          "default": false,
+          "description": "Open the requested new tab in a separate window. Requires new_tab=true.",
+          "title": "New Window",
           "type": "boolean"
         },
         "observe": {
@@ -23,6 +41,21 @@
           "description": "Return a compact before/after page change summary.",
           "title": "Observe",
           "type": "boolean"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         },
         "url": {
           "description": "The URL to navigate to",
@@ -45,6 +78,16 @@
             "data": {
               "additionalProperties": false,
               "properties": {
+                "active": {
+                  "default": true,
+                  "title": "Active",
+                  "type": "boolean"
+                },
+                "background": {
+                  "default": false,
+                  "title": "Background",
+                  "type": "boolean"
+                },
                 "changes": {
                   "anyOf": [
                     {
@@ -62,12 +105,24 @@
                   "title": "Final Url",
                   "type": "string"
                 },
+                "new_context": {
+                  "default": false,
+                  "title": "New Context",
+                  "type": "boolean"
+                },
                 "new_tab": {
                   "title": "New Tab",
                   "type": "boolean"
                 },
+                "new_window": {
+                  "default": false,
+                  "title": "New Window",
+                  "type": "boolean"
+                },
                 "tab_id": {
-                  "title": "Tab Id",
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
                   "type": "string"
                 },
                 "url": {
@@ -76,10 +131,10 @@
                 }
               },
               "required": [
+                "tab_id",
                 "url",
                 "final_url",
-                "new_tab",
-                "tab_id"
+                "new_tab"
               ],
               "title": "PageNavigateData",
               "type": "object"
@@ -414,9 +469,25 @@
     "description": "Go back to the previous page in browser history",
     "inputSchema": {
       "additionalProperties": false,
-      "description": "Empty input schema for tools that don't require arguments.",
-      "properties": {},
-      "title": "EmptyInput",
+      "description": "Empty argument shape for a tab-scoped tool.",
+      "properties": {
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        }
+      },
+      "title": "TabScopedEmptyInput",
       "type": "object"
     },
     "name": "page_go_back",
@@ -428,13 +499,20 @@
             "data": {
               "additionalProperties": false,
               "properties": {
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "url": {
                   "title": "Url",
                   "type": "string"
                 }
               },
               "required": [
-                "url"
+                "url",
+                "tab_id"
               ],
               "title": "PageGoBackData",
               "type": "object"
@@ -510,9 +588,25 @@
     "description": "Go forward to the next page in browser history",
     "inputSchema": {
       "additionalProperties": false,
-      "description": "Empty input schema for tools that don't require arguments.",
-      "properties": {},
-      "title": "EmptyInput",
+      "description": "Empty argument shape for a tab-scoped tool.",
+      "properties": {
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        }
+      },
+      "title": "TabScopedEmptyInput",
       "type": "object"
     },
     "name": "page_go_forward",
@@ -524,13 +618,20 @@
             "data": {
               "additionalProperties": false,
               "properties": {
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "url": {
                   "title": "Url",
                   "type": "string"
                 }
               },
               "required": [
-                "url"
+                "url",
+                "tab_id"
               ],
               "title": "PageGoForwardData",
               "type": "object"
@@ -606,9 +707,25 @@
     "description": "Refresh the current page",
     "inputSchema": {
       "additionalProperties": false,
-      "description": "Empty input schema for tools that don't require arguments.",
-      "properties": {},
-      "title": "EmptyInput",
+      "description": "Empty argument shape for a tab-scoped tool.",
+      "properties": {
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        }
+      },
+      "title": "TabScopedEmptyInput",
       "type": "object"
     },
     "name": "page_refresh",
@@ -620,13 +737,20 @@
             "data": {
               "additionalProperties": false,
               "properties": {
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "url": {
                   "title": "Url",
                   "type": "string"
                 }
               },
               "required": [
-                "url"
+                "url",
+                "tab_id"
               ],
               "title": "PageRefreshData",
               "type": "object"
@@ -1056,6 +1180,21 @@
           "title": "Height",
           "type": "integer"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "width": {
           "description": "Width of the browser window",
           "title": "Width",
@@ -1082,6 +1221,12 @@
                   "title": "Height",
                   "type": "integer"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "width": {
                   "title": "Width",
                   "type": "integer"
@@ -1089,7 +1234,8 @@
               },
               "required": [
                 "width",
-                "height"
+                "height",
+                "tab_id"
               ],
               "title": "PageResizeData",
               "type": "object"
@@ -1172,6 +1318,21 @@
           "description": "Take a full page screenshot",
           "title": "Full Page",
           "type": "boolean"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "title": "ScreenshotInput",
@@ -1190,10 +1351,17 @@
                   "additionalProperties": true,
                   "title": "Screenshot",
                   "type": "object"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
-                "screenshot"
+                "screenshot",
+                "tab_id"
               ],
               "title": "PageScreenshotData",
               "type": "object"
@@ -1281,6 +1449,21 @@
           "description": "Local file path under DP_MCP_SCREENSHOT_ROOT to save screenshot",
           "title": "Path",
           "type": "string"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "required": [
@@ -1302,10 +1485,17 @@
                   "additionalProperties": true,
                   "title": "Screenshot",
                   "type": "object"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
-                "screenshot"
+                "screenshot",
+                "tab_id"
               ],
               "title": "PageScreenshotSaveData",
               "type": "object"
@@ -1503,6 +1693,21 @@
           "minimum": 0.1,
           "title": "Scale",
           "type": "number"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "required": [
@@ -1703,9 +1908,9 @@
               "type": "string"
             },
             "tab_id": {
+              "description": "MCP tab id captured for this operation.",
               "maxLength": 128,
               "minLength": 1,
-              "title": "Tab Id",
               "type": "string"
             },
             "target_fingerprint": {
@@ -1768,13 +1973,20 @@
                 },
                 "receipt": {
                   "$ref": "#/$defs/PageExportArtifactReceipt"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
                 "operation_key",
                 "format",
                 "artifact",
-                "receipt"
+                "receipt",
+                "tab_id"
               ],
               "title": "PageExportArtifactData",
               "type": "object"
@@ -1873,6 +2085,21 @@
           "minimum": 0,
           "title": "Max Text Chars",
           "type": "integer"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "title": "PageSnapshotInput",
@@ -1944,6 +2171,12 @@
                   "title": "Meta",
                   "type": "object"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "text_excerpt": {
                   "title": "Text Excerpt",
                   "type": "string"
@@ -1974,7 +2207,8 @@
                 "counts",
                 "truncated",
                 "limits",
-                "meta"
+                "meta",
+                "tab_id"
               ],
               "title": "PageSnapshotData",
               "type": "object"
@@ -2212,6 +2446,21 @@
           "default": null,
           "description": "Optional selector/accessibility element whose AX subtree is returned.",
           "title": "Scope"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "title": "PageAccessibilitySnapshotInput",
@@ -2333,6 +2582,12 @@
                   ],
                   "title": "Scope"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "truncated": {
                   "title": "Truncated",
                   "type": "boolean"
@@ -2350,7 +2605,8 @@
                 "truncated",
                 "values_included",
                 "scope",
-                "meta"
+                "meta",
+                "tab_id"
               ],
               "title": "PageAccessibilitySnapshotData",
               "type": "object"
@@ -2443,6 +2699,21 @@
           "minimum": 1,
           "title": "Max Texts",
           "type": "integer"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "title": "PageObserveInput",
@@ -2481,6 +2752,12 @@
                   "title": "Ready State",
                   "type": "string"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "text_samples": {
                   "items": {
                     "type": "string"
@@ -2505,7 +2782,8 @@
                 "text_samples",
                 "active_element",
                 "console",
-                "limits"
+                "limits",
+                "tab_id"
               ],
               "title": "PageObservation",
               "type": "object"
@@ -2601,6 +2879,21 @@
           "description": "JavaScript function body to run in the current page. Use return to provide a JSON-serializable result.",
           "title": "Script",
           "type": "string"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "required": [
@@ -2650,6 +2943,12 @@
                   "title": "Result Type",
                   "type": "string"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "truncated": {
                   "title": "Truncated",
                   "type": "boolean"
@@ -2660,7 +2959,8 @@
                 "result_type",
                 "truncated",
                 "original_json_chars",
-                "max_chars"
+                "max_chars",
+                "tab_id"
               ],
               "title": "PageEvaluateData",
               "type": "object"
@@ -2754,6 +3054,21 @@
           "title": "Profile",
           "type": "string"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "x": {
           "description": "Viewport X coordinate in CSS pixels",
           "minimum": 0,
@@ -2840,6 +3155,12 @@
                 "motion": {
                   "$ref": "#/$defs/PointerMoveData"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "url": {
                   "title": "Url",
                   "type": "string"
@@ -2858,7 +3179,8 @@
                 "y",
                 "element",
                 "url",
-                "motion"
+                "motion",
+                "tab_id"
               ],
               "title": "PagePointerMoveData",
               "type": "object"
@@ -3013,6 +3335,21 @@
           "title": "Start Y",
           "type": "number"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "waypoints": {
           "description": "Optional ordered viewport points visited while the button remains pressed",
           "items": {
@@ -3134,6 +3471,12 @@
                   "title": "Start Y",
                   "type": "number"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "url": {
                   "title": "Url",
                   "type": "string"
@@ -3146,7 +3489,8 @@
                 "end_y",
                 "element",
                 "url",
-                "motion"
+                "motion",
+                "tab_id"
               ],
               "title": "PagePointerDragData",
               "type": "object"
@@ -3449,6 +3793,21 @@
             }
           ],
           "title": "Source"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "required": [
@@ -3760,6 +4119,12 @@
                 "source": {
                   "$ref": "#/$defs/ResolvedPointerTargetData"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "url": {
                   "title": "Url",
                   "type": "string"
@@ -3769,7 +4134,8 @@
                 "source",
                 "destination",
                 "url",
-                "motion"
+                "motion",
+                "tab_id"
               ],
               "title": "PagePointerDragElementData",
               "type": "object"
@@ -3882,6 +4248,21 @@
           "title": "Profile",
           "type": "string"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "x": {
           "description": "Viewport X coordinate in CSS pixels",
           "minimum": 0,
@@ -3983,6 +4364,12 @@
                 "motion": {
                   "$ref": "#/$defs/PointerMotionData"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "url": {
                   "title": "Url",
                   "type": "string"
@@ -4001,7 +4388,8 @@
                 "y",
                 "element",
                 "url",
-                "motion"
+                "motion",
+                "tab_id"
               ],
               "title": "PageClickXYData",
               "type": "object"
@@ -4174,9 +4562,25 @@
     "description": "Get the current URL of the page",
     "inputSchema": {
       "additionalProperties": false,
-      "description": "Empty input schema for tools that don't require arguments.",
-      "properties": {},
-      "title": "EmptyInput",
+      "description": "Empty argument shape for a tab-scoped tool.",
+      "properties": {
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        }
+      },
+      "title": "TabScopedEmptyInput",
       "type": "object"
     },
     "name": "page_get_url",
@@ -4188,13 +4592,20 @@
             "data": {
               "additionalProperties": false,
               "properties": {
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "url": {
                   "title": "Url",
                   "type": "string"
                 }
               },
               "required": [
-                "url"
+                "url",
+                "tab_id"
               ],
               "title": "PageGetUrlData",
               "type": "object"
@@ -4288,6 +4699,21 @@
           },
           "title": "Headers",
           "type": "object"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "required": [
@@ -4320,12 +4746,19 @@
                   "const": true,
                   "title": "Set",
                   "type": "boolean"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
                 "count",
                 "headers",
-                "set"
+                "set",
+                "tab_id"
               ],
               "title": "BrowserHeadersSetData",
               "type": "object"
@@ -4417,6 +4850,21 @@
           "default": null,
           "title": "Platform"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "user_agent": {
           "maxLength": 2048,
           "minLength": 1,
@@ -4459,6 +4907,12 @@
                   "title": "Set",
                   "type": "boolean"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "user_agent": {
                   "title": "User Agent",
                   "type": "string"
@@ -4468,7 +4922,8 @@
                 "previous_user_agent",
                 "user_agent",
                 "platform",
-                "set"
+                "set",
+                "tab_id"
               ],
               "title": "BrowserUserAgentSetData",
               "type": "object"
@@ -4544,9 +4999,25 @@
     "description": "Clear HTTP cache without clearing cookies or Web Storage.",
     "inputSchema": {
       "additionalProperties": false,
-      "description": "Empty input schema for tools that don't require arguments.",
-      "properties": {},
-      "title": "EmptyInput",
+      "description": "Empty argument shape for a tab-scoped tool.",
+      "properties": {
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        }
+      },
+      "title": "TabScopedEmptyInput",
       "type": "object"
     },
     "name": "browser_cache_clear",
@@ -4562,10 +5033,17 @@
                   "const": true,
                   "title": "Cleared",
                   "type": "boolean"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
-                "cleared"
+                "cleared",
+                "tab_id"
               ],
               "title": "BrowserCacheClearData",
               "type": "object"
@@ -4661,6 +5139,21 @@
           ],
           "title": "Permission",
           "type": "string"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "required": [
@@ -4699,13 +5192,20 @@
                   ],
                   "title": "State",
                   "type": "string"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
                 "permission",
                 "state",
                 "origin",
-                "query_supported"
+                "query_supported",
+                "tab_id"
               ],
               "title": "BrowserPermissionGetData",
               "type": "object"
@@ -4823,6 +5323,21 @@
           ],
           "title": "Setting",
           "type": "string"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "required": [
@@ -4885,6 +5400,12 @@
                   "title": "Setting",
                   "type": "string"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "verified": {
                   "title": "Verified",
                   "type": "boolean"
@@ -4897,7 +5418,8 @@
                 "applied",
                 "verified",
                 "observed_state",
-                "context_scope"
+                "context_scope",
+                "tab_id"
               ],
               "title": "BrowserPermissionSetData",
               "type": "object"
@@ -4973,9 +5495,25 @@
     "description": "Reset all Chromium permission overrides in the current browser context.",
     "inputSchema": {
       "additionalProperties": false,
-      "description": "Empty input schema for tools that don't require arguments.",
-      "properties": {},
-      "title": "EmptyInput",
+      "description": "Empty argument shape for a tab-scoped tool.",
+      "properties": {
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        }
+      },
+      "title": "TabScopedEmptyInput",
       "type": "object"
     },
     "name": "browser_permissions_reset",
@@ -4996,11 +5534,18 @@
                   "const": true,
                   "title": "Reset",
                   "type": "boolean"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
                 "reset",
-                "context_scope"
+                "context_scope",
+                "tab_id"
               ],
               "title": "BrowserPermissionsResetData",
               "type": "object"
@@ -5086,6 +5631,21 @@
           "title": "Max Message Chars",
           "type": "integer"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "timeout": {
           "default": 0,
           "description": "Seconds to wait for a pending alert, confirm, or prompt.",
@@ -5135,6 +5695,12 @@
                   "title": "Pending",
                   "type": "boolean"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "timed_out": {
                   "title": "Timed Out",
                   "type": "boolean"
@@ -5150,7 +5716,8 @@
                 "dialog_type",
                 "message",
                 "message_truncated",
-                "timeout"
+                "timeout",
+                "tab_id"
               ],
               "title": "PageDialogObserveData",
               "type": "object"
@@ -5249,6 +5816,21 @@
           "default": null,
           "description": "Text for an accepted prompt. The value is never returned.",
           "title": "Prompt Text"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         },
         "timeout": {
           "default": 0.0,
@@ -5359,9 +5941,9 @@
               "type": "string"
             },
             "tab_id": {
+              "description": "MCP tab id captured for this operation.",
               "maxLength": 128,
               "minLength": 1,
-              "title": "Tab Id",
               "type": "string"
             },
             "target_fingerprint": {
@@ -5492,6 +6074,12 @@
                 },
                 "receipt": {
                   "$ref": "#/$defs/ActionReceipt"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
@@ -5501,7 +6089,8 @@
                 "dialog_message",
                 "prompt",
                 "final_url",
-                "receipt"
+                "receipt",
+                "tab_id"
               ],
               "title": "PageDialogRespondData",
               "type": "object"
@@ -5846,6 +6435,21 @@
           ],
           "description": "Selector/accessibility target, viewport coordinate click, or keyboard input that starts one download.",
           "title": "Selector"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         },
         "timeout": {
           "default": 30.0,
@@ -6246,6 +6850,12 @@
               "title": "Status",
               "type": "string"
             },
+            "tab_id": {
+              "description": "MCP tab id captured for this operation.",
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
             "target_kind": {
               "anyOf": [
                 {
@@ -6293,7 +6903,8 @@
             "operation_key",
             "status",
             "artifact",
-            "receipt"
+            "receipt",
+            "tab_id"
           ],
           "title": "ElementClickAndDownloadFailedData",
           "type": "object"
@@ -6379,9 +6990,9 @@
               "type": "string"
             },
             "tab_id": {
+              "description": "MCP tab id captured for this operation.",
               "maxLength": 128,
               "minLength": 1,
-              "title": "Tab Id",
               "type": "string"
             },
             "target_fingerprint": {
@@ -6646,6 +7257,12 @@
               "title": "Status",
               "type": "string"
             },
+            "tab_id": {
+              "description": "MCP tab id captured for this operation.",
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
             "target_kind": {
               "anyOf": [
                 {
@@ -6693,7 +7310,8 @@
             "operation_key",
             "status",
             "artifact",
-            "receipt"
+            "receipt",
+            "tab_id"
           ],
           "title": "ElementClickAndDownloadIndeterminateData",
           "type": "object"
@@ -6779,9 +7397,9 @@
               "type": "string"
             },
             "tab_id": {
+              "description": "MCP tab id captured for this operation.",
               "maxLength": 128,
               "minLength": 1,
-              "title": "Tab Id",
               "type": "string"
             },
             "target_fingerprint": {
@@ -7045,6 +7663,12 @@
               "title": "Status",
               "type": "string"
             },
+            "tab_id": {
+              "description": "MCP tab id captured for this operation.",
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
             "target_kind": {
               "anyOf": [
                 {
@@ -7092,7 +7716,8 @@
             "operation_key",
             "status",
             "artifact",
-            "receipt"
+            "receipt",
+            "tab_id"
           ],
           "title": "ElementClickAndDownloadSuccessData",
           "type": "object"
@@ -7178,9 +7803,9 @@
               "type": "string"
             },
             "tab_id": {
+              "description": "MCP tab id captured for this operation.",
               "maxLength": 128,
               "minLength": 1,
-              "title": "Tab Id",
               "type": "string"
             },
             "target_fingerprint": {
@@ -7446,6 +8071,12 @@
               "title": "Status",
               "type": "string"
             },
+            "tab_id": {
+              "description": "MCP tab id captured for this operation.",
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
             "target_kind": {
               "anyOf": [
                 {
@@ -7493,7 +8124,8 @@
             "operation_key",
             "status",
             "artifact",
-            "receipt"
+            "receipt",
+            "tab_id"
           ],
           "title": "ElementClickAndDownloadValidationFailedData",
           "type": "object"
@@ -7579,9 +8211,9 @@
               "type": "string"
             },
             "tab_id": {
+              "description": "MCP tab id captured for this operation.",
               "maxLength": 128,
               "minLength": 1,
-              "title": "Tab Id",
               "type": "string"
             },
             "target_fingerprint": {
@@ -7826,6 +8458,21 @@
           "minimum": -1,
           "title": "Since",
           "type": "integer"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "title": "ConsoleLogsInput",
@@ -7864,6 +8511,12 @@
                   "title": "Next Cursor",
                   "type": "integer"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "total": {
                   "title": "Total",
                   "type": "integer"
@@ -7875,7 +8528,8 @@
                 "count",
                 "total",
                 "next_cursor",
-                "logs"
+                "logs",
+                "tab_id"
               ],
               "title": "ConsoleLogsData",
               "type": "object"
@@ -8092,6 +8746,21 @@
           "description": "CSS selector or XPath to find the element. Bare selectors are CSS; use text:... for text matching or explicit tag:/css:/xpath:/@attr locators.",
           "title": "Selector"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "timeout": {
           "default": 3,
           "description": "Timeout in seconds to wait for element",
@@ -8120,10 +8789,17 @@
                   "additionalProperties": true,
                   "title": "Element",
                   "type": "object"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
-                "element"
+                "element",
+                "tab_id"
               ],
               "title": "ElementFindData",
               "type": "object"
@@ -8353,6 +9029,21 @@
           ],
           "description": "CSS selector, XPath, or explicit DrissionPage locator for repeated elements. Bare selectors are CSS.",
           "title": "Selector"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "required": [
@@ -8461,6 +9152,12 @@
                   "title": "Shadow Hosts",
                   "type": "array"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "target_kind": {
                   "default": "selector",
                   "enum": [
@@ -8485,7 +9182,8 @@
                 "limit",
                 "truncated",
                 "elements",
-                "meta"
+                "meta",
+                "tab_id"
               ],
               "title": "ElementFindAllData",
               "type": "object"
@@ -8727,6 +9425,21 @@
           "description": "CSS selector or XPath to find the element. Bare selectors are CSS; use text:... for text matching or explicit tag:/css:/xpath:/@attr locators.",
           "title": "Selector"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "timeout": {
           "default": 10,
           "description": "Timeout in seconds to wait for element",
@@ -8847,6 +9560,12 @@
                   "title": "Shadow Hosts",
                   "type": "array"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "target_kind": {
                   "default": "selector",
                   "enum": [
@@ -8868,7 +9587,8 @@
                 "selector_normalized",
                 "url",
                 "button",
-                "click_count"
+                "click_count",
+                "tab_id"
               ],
               "title": "ElementClickData",
               "type": "object"
@@ -9097,6 +9817,21 @@
           "description": "CSS selector or XPath to find the input element. Bare selectors are CSS; use text:... for text matching or explicit tag:/css:/xpath:/@attr locators.",
           "title": "Selector"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "text": {
           "description": "Text to type into the element",
           "title": "Text",
@@ -9210,6 +9945,12 @@
                   "title": "Shadow Hosts",
                   "type": "array"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "target_kind": {
                   "default": "selector",
                   "enum": [
@@ -9231,7 +9972,8 @@
                 "selector_strategy",
                 "selector_normalized",
                 "typed",
-                "cleared"
+                "cleared",
+                "tab_id"
               ],
               "title": "ElementTypeData",
               "type": "object"
@@ -9452,6 +10194,21 @@
           "default": "",
           "description": "CSS selector or XPath; empty means whole page. Bare selectors are CSS; use text:... for text matching.",
           "title": "Selector"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "title": "GetTextInput",
@@ -9532,6 +10289,12 @@
                   "title": "Shadow Hosts",
                   "type": "array"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "target_kind": {
                   "default": "selector",
                   "enum": [
@@ -9551,7 +10314,8 @@
                 "locator",
                 "selector_strategy",
                 "selector_normalized",
-                "text"
+                "text",
+                "tab_id"
               ],
               "title": "ElementGetTextData",
               "type": "object"
@@ -9772,6 +10536,21 @@
           ],
           "description": "CSS selector or XPath to find the element. Bare selectors are CSS; use text:... for text matching or explicit tag:/css:/xpath:/@attr locators.",
           "title": "Selector"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "required": [
@@ -9860,6 +10639,12 @@
                   "title": "Shadow Hosts",
                   "type": "array"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "target_kind": {
                   "default": "selector",
                   "enum": [
@@ -9887,7 +10672,8 @@
                 "selector_strategy",
                 "selector_normalized",
                 "attribute",
-                "value"
+                "value",
+                "tab_id"
               ],
               "title": "ElementGetAttributeData",
               "type": "object"
@@ -10108,6 +10894,21 @@
           ],
           "description": "CSS selector or XPath to find the element. Bare selectors are CSS; use text:... for text matching or explicit tag:/css:/xpath:/@attr locators.",
           "title": "Selector"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "required": [
@@ -10196,6 +10997,12 @@
                   "title": "Shadow Hosts",
                   "type": "array"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "target_kind": {
                   "default": "selector",
                   "enum": [
@@ -10215,7 +11022,8 @@
                 "selector_strategy",
                 "selector_normalized",
                 "property",
-                "value"
+                "value",
+                "tab_id"
               ],
               "title": "ElementGetPropertyData",
               "type": "object"
@@ -10436,6 +11244,21 @@
           "default": "",
           "description": "CSS selector or XPath; empty means whole page. Bare selectors are CSS; use text:... for text matching.",
           "title": "Selector"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "title": "GetHtmlInput",
@@ -10520,6 +11343,12 @@
                   "title": "Shadow Hosts",
                   "type": "array"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "target_kind": {
                   "default": "selector",
                   "enum": [
@@ -10535,7 +11364,8 @@
                 "locator",
                 "selector_strategy",
                 "selector_normalized",
-                "html"
+                "html",
+                "tab_id"
               ],
               "title": "ElementGetHtmlData",
               "type": "object"
@@ -10751,6 +11581,21 @@
           ],
           "description": "String locator or structured selector/accessibility target with frame and shadow scope.",
           "title": "Selector"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         },
         "timeout": {
           "default": 3,
@@ -11062,6 +11907,12 @@
                   "title": "Shadow Hosts",
                   "type": "array"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "tag": {
                   "title": "Tag",
                   "type": "string"
@@ -11102,7 +11953,8 @@
                 "covered",
                 "covering_backend_node_id",
                 "rect",
-                "presentation"
+                "presentation",
+                "tab_id"
               ],
               "title": "ElementStateData",
               "type": "object"
@@ -11328,6 +12180,21 @@
           "description": "CSS/XPath/DrissionPage locator for an input[type=file].",
           "title": "Selector"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "timeout": {
           "default": 10,
           "description": "Timeout in seconds to wait for the file input.",
@@ -11430,6 +12297,12 @@
                   "title": "Shadow Hosts",
                   "type": "array"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "target_kind": {
                   "default": "selector",
                   "enum": [
@@ -11452,7 +12325,8 @@
                 "selector_normalized",
                 "uploaded",
                 "file_count",
-                "filenames"
+                "filenames",
+                "tab_id"
               ],
               "title": "ElementUploadFileData",
               "type": "object"
@@ -11680,6 +12554,21 @@
           "description": "Selector/accessibility target that opens a file chooser.",
           "title": "Selector"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "timeout": {
           "default": 10.0,
           "exclusiveMinimum": 0,
@@ -11781,6 +12670,12 @@
                   "title": "Shadow Hosts",
                   "type": "array"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "target_kind": {
                   "default": "selector",
                   "enum": [
@@ -11803,7 +12698,8 @@
                 "selector_normalized",
                 "uploaded",
                 "file_count",
-                "filenames"
+                "filenames",
+                "tab_id"
               ],
               "title": "ElementClickAndUploadData",
               "type": "object"
@@ -11905,6 +12801,21 @@
           "title": "Pixels",
           "type": "integer"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "x": {
           "default": 0,
           "description": "X coordinate for direction=position.",
@@ -11940,6 +12851,12 @@
                   "title": "Pixels",
                   "type": "integer"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "url": {
                   "title": "Url",
                   "type": "string"
@@ -11958,7 +12875,8 @@
                 "pixels",
                 "x",
                 "y",
-                "url"
+                "url",
+                "tab_id"
               ],
               "title": "PageScrollData",
               "type": "object"
@@ -12180,6 +13098,21 @@
           ],
           "description": "String locator or structured element target.",
           "title": "Selector"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         },
         "timeout": {
           "default": 10,
@@ -12534,6 +13467,12 @@
                   "title": "Shadow Hosts",
                   "type": "array"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "target_kind": {
                   "default": "selector",
                   "enum": [
@@ -12557,7 +13496,8 @@
                 "scroll_method",
                 "before",
                 "after",
-                "url"
+                "url",
+                "tab_id"
               ],
               "title": "ElementScrollIntoViewData",
               "type": "object"
@@ -12800,6 +13740,21 @@
           "description": "String locator or structured element target.",
           "title": "Selector"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "timeout": {
           "default": 10,
           "maximum": 120,
@@ -12911,6 +13866,12 @@
                   "title": "Shadow Hosts",
                   "type": "array"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "target_kind": {
                   "default": "selector",
                   "enum": [
@@ -12932,7 +13893,8 @@
                 "selector_normalized",
                 "url",
                 "offset_x",
-                "offset_y"
+                "offset_y",
+                "tab_id"
               ],
               "title": "ElementHoverData",
               "type": "object"
@@ -13022,6 +13984,21 @@
           "description": "Text or DrissionPage key string to send.",
           "title": "Keys",
           "type": "string"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "required": [
@@ -13074,6 +14051,12 @@
                 "keys": {
                   "$ref": "#/$defs/KeyboardInputMetadata"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "url": {
                   "title": "Url",
                   "type": "string"
@@ -13082,7 +14065,8 @@
               "required": [
                 "keys",
                 "interval",
-                "url"
+                "url",
+                "tab_id"
               ],
               "title": "KeyboardPressData",
               "type": "object"
@@ -13310,6 +14294,21 @@
           "description": "String locator or structured select target.",
           "title": "Selector"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "timeout": {
           "default": 10,
           "maximum": 120,
@@ -13414,6 +14413,12 @@
                   "title": "Shadow Hosts",
                   "type": "array"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "target_kind": {
                   "default": "selector",
                   "enum": [
@@ -13435,7 +14440,8 @@
                 "selector_normalized",
                 "selected",
                 "by",
-                "value"
+                "value",
+                "tab_id"
               ],
               "title": "ElementSelectData",
               "type": "object"
@@ -13664,6 +14670,21 @@
           "description": "String locator or structured checkbox target.",
           "title": "Selector"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "timeout": {
           "default": 10,
           "maximum": 120,
@@ -13761,6 +14782,12 @@
                   "title": "Shadow Hosts",
                   "type": "array"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "target_kind": {
                   "default": "selector",
                   "enum": [
@@ -13777,7 +14804,8 @@
                 "selector_strategy",
                 "selector_normalized",
                 "checked",
-                "by_js"
+                "by_js",
+                "tab_id"
               ],
               "title": "ElementCheckData",
               "type": "object"
@@ -13861,6 +14889,21 @@
           "minimum": 1,
           "title": "Limit",
           "type": "integer"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "title": "FrameListInput",
@@ -14202,13 +15245,20 @@
                 "returned": {
                   "title": "Returned",
                   "type": "integer"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
                 "count",
                 "returned",
                 "limit",
-                "frames"
+                "frames",
+                "tab_id"
               ],
               "title": "FrameListData",
               "type": "object"
@@ -14317,6 +15367,21 @@
           "minimum": 0,
           "title": "Max Text Chars",
           "type": "integer"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         },
         "timeout": {
           "default": 3,
@@ -14707,6 +15772,12 @@
                   "title": "Meta",
                   "type": "object"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "text_excerpt": {
                   "title": "Text Excerpt",
                   "type": "string"
@@ -14738,7 +15809,8 @@
                 "counts",
                 "truncated",
                 "limits",
-                "meta"
+                "meta",
+                "tab_id"
               ],
               "title": "FrameSnapshotData",
               "type": "object"
@@ -14831,6 +15903,21 @@
           "description": "Selector inside the target frame.",
           "title": "Selector",
           "type": "string"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         },
         "timeout": {
           "default": 3,
@@ -15171,11 +16258,18 @@
                 },
                 "frame": {
                   "$ref": "#/$defs/FrameSummaryData"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
                 "frame",
-                "element"
+                "element",
+                "tab_id"
               ],
               "title": "FrameFindData",
               "type": "object"
@@ -15263,6 +16357,21 @@
           "title": "Selector",
           "type": "string"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "timeout": {
           "default": 3,
           "maximum": 120,
@@ -15296,11 +16405,18 @@
                   "additionalProperties": true,
                   "title": "Host",
                   "type": "object"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
                 "host",
-                "element"
+                "element",
+                "tab_id"
               ],
               "title": "ShadowFindData",
               "type": "object"
@@ -15399,6 +16515,21 @@
           "description": "Selector inside the shadow root.",
           "title": "Selector",
           "type": "string"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "required": [
@@ -15447,6 +16578,12 @@
                   "title": "Returned",
                   "type": "integer"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "target": {
                   "additionalProperties": true,
                   "title": "Target",
@@ -15465,7 +16602,8 @@
                 "limit",
                 "truncated",
                 "elements",
-                "meta"
+                "meta",
+                "tab_id"
               ],
               "title": "ShadowFindAllData",
               "type": "object"
@@ -15558,6 +16696,21 @@
           "description": "Return cookie values. Defaults to false to avoid leaking secrets.",
           "title": "Include Values",
           "type": "boolean"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "title": "BrowserCookiesGetInput",
@@ -15591,13 +16744,20 @@
                 "include_values": {
                   "title": "Include Values",
                   "type": "boolean"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
                 "count",
                 "include_values",
                 "all_domains",
-                "cookies"
+                "cookies",
+                "tab_id"
               ],
               "title": "BrowserCookiesGetData",
               "type": "object"
@@ -15814,6 +16974,21 @@
           "minItems": 1,
           "title": "Cookies",
           "type": "array"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "required": [
@@ -15970,12 +17145,19 @@
                   "const": true,
                   "title": "Set",
                   "type": "boolean"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
                 "count",
                 "set",
-                "cookies"
+                "cookies",
+                "tab_id"
               ],
               "title": "BrowserCookiesSetData",
               "type": "object"
@@ -16085,6 +17267,21 @@
           "default": null,
           "title": "Path"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "url": {
           "anyOf": [
             {
@@ -16145,6 +17342,12 @@
                   ],
                   "title": "Path"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "url": {
                   "anyOf": [
                     {
@@ -16162,7 +17365,8 @@
                 "url",
                 "domain",
                 "path",
-                "deleted"
+                "deleted",
+                "tab_id"
               ],
               "title": "BrowserCookiesDeleteData",
               "type": "object"
@@ -16239,7 +17443,23 @@
     "inputSchema": {
       "additionalProperties": false,
       "description": "Input schema for clearing all browser cookies.",
-      "properties": {},
+      "properties": {
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        }
+      },
       "title": "BrowserCookiesClearInput",
       "type": "object"
     },
@@ -16256,10 +17476,17 @@
                   "const": true,
                   "title": "Cleared",
                   "type": "boolean"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
-                "cleared"
+                "cleared",
+                "tab_id"
               ],
               "title": "BrowserCookiesClearData",
               "type": "object"
@@ -16357,6 +17584,21 @@
           "description": "Optional key. Empty returns all keys.",
           "title": "Key",
           "type": "string"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "title": "StorageGetInput",
@@ -16393,6 +17635,12 @@
                 "key": {
                   "title": "Key",
                   "type": "string"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
@@ -16400,7 +17648,8 @@
                 "key",
                 "include_values",
                 "count",
-                "items"
+                "items",
+                "tab_id"
               ],
               "title": "StorageGetData",
               "type": "object"
@@ -16492,6 +17741,21 @@
           "title": "Key",
           "type": "string"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "value": {
           "description": "String value to store. Not echoed in result.",
           "title": "Value",
@@ -16526,12 +17790,19 @@
                   "const": true,
                   "title": "Set",
                   "type": "boolean"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
                 "area",
                 "key",
-                "set"
+                "set",
+                "tab_id"
               ],
               "title": "StorageSetData",
               "type": "object"
@@ -16623,6 +17894,21 @@
           "description": "Optional key. Empty clears the area.",
           "title": "Key",
           "type": "string"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "title": "StorageClearInput",
@@ -16649,12 +17935,19 @@
                 "key": {
                   "title": "Key",
                   "type": "string"
+                },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
                 }
               },
               "required": [
                 "area",
                 "key",
-                "cleared"
+                "cleared",
+                "tab_id"
               ],
               "title": "StorageClearData",
               "type": "object"
@@ -16871,6 +18164,21 @@
           "description": "CSS selector or XPath to wait for. Bare selectors are CSS; use text:... for text matching or explicit tag:/css:/xpath:/@attr locators.",
           "title": "Selector"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "timeout": {
           "default": 10,
           "description": "Timeout in seconds",
@@ -16966,6 +18274,12 @@
                   "title": "Shadow Hosts",
                   "type": "array"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "target_kind": {
                   "default": "selector",
                   "enum": [
@@ -16986,7 +18300,8 @@
                 "selector_strategy",
                 "selector_normalized",
                 "found",
-                "timeout"
+                "timeout",
+                "tab_id"
               ],
               "title": "WaitForElementData",
               "type": "object"
@@ -17064,6 +18379,21 @@
       "additionalProperties": false,
       "description": "Input schema for waiting for URL changes.",
       "properties": {
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "timeout": {
           "default": 10,
           "description": "Timeout in seconds",
@@ -17098,6 +18428,12 @@
                   "title": "Matched",
                   "type": "boolean"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "timeout": {
                   "title": "Timeout",
                   "type": "number"
@@ -17115,7 +18451,8 @@
                 "url_pattern",
                 "matched",
                 "url",
-                "timeout"
+                "timeout",
+                "tab_id"
               ],
               "title": "WaitForUrlData",
               "type": "object"
@@ -17487,6 +18824,21 @@
           "title": "Stable Ms",
           "type": "integer"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "timeout": {
           "default": 10,
           "description": "Timeout in seconds",
@@ -17543,6 +18895,12 @@
                   "title": "State",
                   "type": "object"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "timeout": {
                   "title": "Timeout",
                   "type": "number"
@@ -17560,7 +18918,8 @@
                 "matched",
                 "timeout",
                 "elapsed_ms",
-                "state"
+                "state",
+                "tab_id"
               ],
               "title": "WaitUntilData",
               "type": "object"
@@ -17662,6 +19021,21 @@
           "title": "Resource Type",
           "type": "string"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "targets": {
           "description": "Optional URL substrings or regex patterns passed to DrissionPage.",
           "items": {
@@ -17701,15 +19075,17 @@
                   "type": "string"
                 },
                 "tab_id": {
-                  "title": "Tab Id",
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
                   "type": "string"
                 }
               },
               "required": [
+                "tab_id",
                 "listening",
                 "filters",
                 "started_at",
-                "tab_id",
                 "cleared"
               ],
               "title": "NetworkListenStartData",
@@ -17816,6 +19192,21 @@
           "title": "Max Body Chars",
           "type": "integer"
         },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "timeout": {
           "default": 5.0,
           "description": "Maximum seconds to wait for packets.",
@@ -17862,6 +19253,12 @@
                   "title": "Packets",
                   "type": "array"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "timed_out": {
                   "title": "Timed Out",
                   "type": "boolean"
@@ -17873,7 +19270,8 @@
                 "count",
                 "limit",
                 "packets",
-                "meta"
+                "meta",
+                "tab_id"
               ],
               "title": "NetworkListenWaitData",
               "type": "object"
@@ -17956,6 +19354,21 @@
           "description": "Clear the listener queue while stopping.",
           "title": "Clear",
           "type": "boolean"
+        },
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
         }
       },
       "title": "NetworkListenStopInput",
@@ -17978,6 +19391,12 @@
                   "title": "Listening",
                   "type": "boolean"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "was_listening": {
                   "title": "Was Listening",
                   "type": "boolean"
@@ -17986,7 +19405,8 @@
               "required": [
                 "listening",
                 "was_listening",
-                "cleared"
+                "cleared",
+                "tab_id"
               ],
               "title": "NetworkListenStopData",
               "type": "object"
@@ -18064,6 +19484,21 @@
       "additionalProperties": false,
       "description": "Input schema for replacing blocked URL patterns.",
       "properties": {
+        "tab_id": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional MCP or native DrissionPage tab id. When omitted, the current tab is captured at call start.",
+          "title": "Tab Id"
+        },
         "urls": {
           "description": "URL patterns with optional wildcards. An empty list clears them.",
           "items": {
@@ -18100,6 +19535,12 @@
                   "title": "Set",
                   "type": "boolean"
                 },
+                "tab_id": {
+                  "description": "MCP tab id captured for this operation.",
+                  "maxLength": 128,
+                  "minLength": 1,
+                  "type": "string"
+                },
                 "urls": {
                   "items": {
                     "type": "string"
@@ -18111,7 +19552,8 @@
               "required": [
                 "count",
                 "urls",
-                "set"
+                "set",
+                "tab_id"
               ],
               "title": "NetworkBlockedUrlsSetData",
               "type": "object"

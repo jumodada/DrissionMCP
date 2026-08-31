@@ -65,6 +65,8 @@ Tools return MCP content blocks plus a stable machine-readable result payload:
   stable `action` identifiers and optional `tool`, `command`, or `env` fields.
 - Human-readable MCP text content still follows as `### Result` or `### Error` blocks.
 - Screenshots include `ImageContent` with PNG data plus the JSON result block.
+- Successful tab-scoped tools include the resolved MCP `tab_id` in `data`, and
+  their public `outputSchema` requires that non-empty string.
 - Tool input schemas reject unknown fields. Typos such as `fullPage` instead of
   `full_page` return `MCP_ARGUMENT_INVALID` instead of being silently ignored.
 
@@ -106,7 +108,7 @@ Common runtime failures include structured recovery hints under
 `page_snapshot`, `element_find_all`, `wait_for_element`, and iframe/dynamic
 content checks.
 
-Stable tool-execution error codes include `BROWSER_START_FAILED`, `BROWSER_NOT_INITIALIZED`, `PAGE_NAVIGATION_FAILED`, `ELEMENT_NOT_FOUND`, `SELECTOR_INVALID`, `TIMEOUT`, `DIALOG_PENDING`, `DIALOG_NOT_FOUND`, `SCREENSHOT_FAILED`, `POLICY_DENIED`, `UNSUPPORTED_OPERATION`, and `UNKNOWN_ERROR`. Public messages are normalized by the MCP server and do not reflect DrissionPage version suffixes, localized runtime text, CDP object IDs, stack payloads, or raw internal exception dictionaries. Protocol/validation diagnostics use `TOOL_NOT_FOUND` and `MCP_ARGUMENT_INVALID` where the SDK permits stable diagnostic data.
+Stable tool-execution error codes include `BROWSER_START_FAILED`, `BROWSER_NOT_INITIALIZED`, `PAGE_NAVIGATION_FAILED`, `ELEMENT_NOT_FOUND`, `SELECTOR_INVALID`, `TIMEOUT`, `DIALOG_PENDING`, `DIALOG_NOT_FOUND`, `TAB_NOT_FOUND`, `TAB_CLOSED`, `SCREENSHOT_FAILED`, `POLICY_DENIED`, `UNSUPPORTED_OPERATION`, and `UNKNOWN_ERROR`. Public messages are normalized by the MCP server and do not reflect DrissionPage version suffixes, localized runtime text, CDP object IDs, stack payloads, or raw internal exception dictionaries. Protocol/validation diagnostics use `TOOL_NOT_FOUND` and `MCP_ARGUMENT_INVALID` where the SDK permits stable diagnostic data.
 
 ## Tool Annotations
 
@@ -122,6 +124,22 @@ The server marks tools with MCP annotations:
 The Pydantic schema returned by `tools/list` is the source of truth. The objects
 below show complete `arguments` payloads for fields that are easy to guess
 incorrectly from a short tool description.
+
+Target an existing tab by the stable MCP id returned from `tab_list` or any
+successful tab-scoped call:
+
+```json
+{"tab_id": "t1", "selector": "#save"}
+```
+
+Omitting `tab_id` captures the current tab once at call start. A later
+`tab_switch` cannot redirect that in-flight call. To create a background tab in
+a disposable Chromium context, creation options require `new_tab: true` and
+cannot be combined with an existing `tab_id`:
+
+```json
+{"url": "https://example.com", "new_tab": true, "background": true, "new_context": true}
+```
 
 Use `url_pattern` with `wait_for_url`:
 
@@ -201,81 +219,103 @@ This table is generated from the strict Pydantic input schemas exposed by `tools
 
 | Tool | Required parameters | Optional parameters |
 | --- | --- | --- |
-| `page_navigate` | `url: string` | `new_tab: boolean = false`<br>`observe: boolean = false` |
+| `page_navigate` | `url: string` | `tab_id: string / null = null`<br>`new_tab: boolean = false`<br>`background: boolean = false`<br>`new_window: boolean = false`<br>`new_context: boolean = false`<br>`observe: boolean = false` |
 | `page_navigate_with_http_auth` | `url: string`<br>`username: string`<br>`password: string` | `realm: string / null = null`<br>`timeout: number = 30.0` |
-| `page_go_back` | — | — |
-| `page_go_forward` | — | — |
-| `page_refresh` | — | — |
+| `page_go_back` | — | `tab_id: string / null = null` |
+| `page_go_forward` | — | `tab_id: string / null = null` |
+| `page_refresh` | — | `tab_id: string / null = null` |
 | `tab_list` | — | — |
 | `tab_switch` | `tab_id: string` | — |
 | `tab_close` | `tab_id: string` | — |
-| `page_resize` | `width: integer`<br>`height: integer` | — |
-| `page_screenshot` | — | `full_page: boolean = false` |
-| `page_screenshot_save` | `path: string` | `full_page: boolean = false` |
-| `page_export_artifact` | `format: string` | `filename: string / null = null`<br>`operation_key: string / null = null`<br>`landscape: boolean = false`<br>`print_background: boolean = true`<br>`scale: number = 1.0`<br>`paper_width: number / null = null`<br>`paper_height: number / null = null`<br>`margin_top: number = 0.4`<br>`margin_bottom: number = 0.4`<br>`margin_left: number = 0.4`<br>`margin_right: number = 0.4`<br>`page_ranges: string = ""`<br>`prefer_css_page_size: boolean = false` |
-| `page_snapshot` | — | `include_html: boolean = false`<br>`max_elements: integer = 50`<br>`max_text_chars: integer = 4000` |
-| `page_accessibility_snapshot` | — | `scope: string / SelectorTargetInput / AccessibilityTargetInput / null = null`<br>`max_nodes: integer = 200`<br>`include_ignored: boolean = false`<br>`include_values: boolean = false` |
-| `page_observe` | — | `max_texts: integer = 20`<br>`max_text_chars: integer = 160` |
-| `page_evaluate` | `script: string` | `args: array`<br>`max_chars: integer = 4000` |
-| `page_pointer_move` | `x: number`<br>`y: number` | `element: string = ""`<br>`profile: string = "direct"` |
-| `page_pointer_drag` | `start_x: number`<br>`start_y: number`<br>`end_x: number`<br>`end_y: number` | `waypoints: array`<br>`element: string = ""`<br>`profile: string = "direct"`<br>`button: string = "left"` |
-| `page_pointer_drag_element` | `source: ElementTargetInput / ElementSourceInput`<br>`destination: ElementDestinationInput / OffsetDestinationInput / TrackRatioDestinationInput` | `profile: string = "direct"`<br>`button: string = "left"` |
-| `page_click_xy` | `x: number`<br>`y: number` | `element: string = ""`<br>`profile: string = "direct"`<br>`button: string = "left"`<br>`delay_before_press_ms: integer = 0` |
+| `page_resize` | `width: integer`<br>`height: integer` | `tab_id: string / null = null` |
+| `page_screenshot` | — | `tab_id: string / null = null`<br>`full_page: boolean = false` |
+| `page_screenshot_save` | `path: string` | `tab_id: string / null = null`<br>`full_page: boolean = false` |
+| `page_export_artifact` | `format: string` | `tab_id: string / null = null`<br>`filename: string / null = null`<br>`operation_key: string / null = null`<br>`landscape: boolean = false`<br>`print_background: boolean = true`<br>`scale: number = 1.0`<br>`paper_width: number / null = null`<br>`paper_height: number / null = null`<br>`margin_top: number = 0.4`<br>`margin_bottom: number = 0.4`<br>`margin_left: number = 0.4`<br>`margin_right: number = 0.4`<br>`page_ranges: string = ""`<br>`prefer_css_page_size: boolean = false` |
+| `page_snapshot` | — | `tab_id: string / null = null`<br>`include_html: boolean = false`<br>`max_elements: integer = 50`<br>`max_text_chars: integer = 4000` |
+| `page_accessibility_snapshot` | — | `tab_id: string / null = null`<br>`scope: string / SelectorTargetInput / AccessibilityTargetInput / null = null`<br>`max_nodes: integer = 200`<br>`include_ignored: boolean = false`<br>`include_values: boolean = false` |
+| `page_observe` | — | `tab_id: string / null = null`<br>`max_texts: integer = 20`<br>`max_text_chars: integer = 160` |
+| `page_evaluate` | `script: string` | `tab_id: string / null = null`<br>`args: array`<br>`max_chars: integer = 4000` |
+| `page_pointer_move` | `x: number`<br>`y: number` | `tab_id: string / null = null`<br>`element: string = ""`<br>`profile: string = "direct"` |
+| `page_pointer_drag` | `start_x: number`<br>`start_y: number`<br>`end_x: number`<br>`end_y: number` | `tab_id: string / null = null`<br>`waypoints: array`<br>`element: string = ""`<br>`profile: string = "direct"`<br>`button: string = "left"` |
+| `page_pointer_drag_element` | `source: ElementTargetInput / ElementSourceInput`<br>`destination: ElementDestinationInput / OffsetDestinationInput / TrackRatioDestinationInput` | `tab_id: string / null = null`<br>`profile: string = "direct"`<br>`button: string = "left"` |
+| `page_click_xy` | `x: number`<br>`y: number` | `tab_id: string / null = null`<br>`element: string = ""`<br>`profile: string = "direct"`<br>`button: string = "left"`<br>`delay_before_press_ms: integer = 0` |
 | `page_close` | — | — |
-| `page_get_url` | — | — |
-| `browser_headers_set` | `headers: object` | — |
-| `browser_user_agent_set` | `user_agent: string` | `platform: string / null = null` |
-| `browser_cache_clear` | — | — |
-| `browser_permission_get` | `permission: string` | — |
-| `browser_permission_set` | `permission: string`<br>`setting: string` | `origin: string / null = null` |
-| `browser_permissions_reset` | — | — |
-| `page_dialog_observe` | — | `timeout: number = 0`<br>`max_message_chars: integer = 2000` |
-| `page_dialog_respond` | `action: string` | `prompt_text: string / null = null`<br>`timeout: number = 0.0` |
-| `element_click_and_download` | `selector: string / SelectorTargetInput / AccessibilityTargetInput / CoordinateDownloadTriggerInput / KeyboardDownloadTriggerInput` | `operation_key: string / null = null`<br>`timeout: number = 30.0`<br>`expected_filename: string / null = null`<br>`expected_mime_type: string / null = null` |
-| `page_console_logs` | — | `level: string = "all"`<br>`since: integer = -1`<br>`limit: integer = 20` |
-| `element_find` | `selector: string / SelectorTargetInput / AccessibilityTargetInput` | `timeout: number = 3` |
-| `element_find_all` | `selector: string / SelectorTargetInput / AccessibilityTargetInput` | `limit: integer = 20`<br>`include_html: boolean = false` |
-| `element_click` | `selector: string / SelectorTargetInput / AccessibilityTargetInput` | `timeout: number = 10`<br>`observe: boolean = false`<br>`button: string = "left"`<br>`click_count: integer = 1` |
-| `element_type` | `selector: string / SelectorTargetInput / AccessibilityTargetInput`<br>`text: string` | `timeout: number = 10`<br>`clear: boolean = true`<br>`observe: boolean = false` |
-| `element_get_text` | — | `selector: string / string / SelectorTargetInput / AccessibilityTargetInput = ""` |
-| `element_get_attribute` | `selector: string / SelectorTargetInput / AccessibilityTargetInput`<br>`attribute: string` | — |
-| `element_get_property` | `selector: string / SelectorTargetInput / AccessibilityTargetInput`<br>`property: string` | — |
-| `element_get_html` | — | `selector: string / string / SelectorTargetInput / AccessibilityTargetInput = ""` |
-| `element_state_get` | `selector: string / SelectorTargetInput / AccessibilityTargetInput` | `timeout: number = 3` |
-| `element_upload_file` | `selector: string / SelectorTargetInput / AccessibilityTargetInput`<br>`paths: array` | `timeout: number = 10` |
-| `element_click_and_upload` | `selector: string / SelectorTargetInput / AccessibilityTargetInput`<br>`paths: array` | `timeout: number = 10.0` |
-| `page_scroll` | — | `direction: string = "down"`<br>`pixels: integer = 300`<br>`x: integer = 0`<br>`y: integer = 0` |
-| `element_scroll_into_view` | `selector: string / SelectorTargetInput / AccessibilityTargetInput` | `center: boolean = true`<br>`timeout: number = 10` |
-| `element_hover` | `selector: string / SelectorTargetInput / AccessibilityTargetInput` | `timeout: number = 10`<br>`offset_x: integer / null = null`<br>`offset_y: integer / null = null` |
-| `keyboard_press` | `keys: string` | `interval: number = 0` |
-| `element_select` | `selector: string / SelectorTargetInput / AccessibilityTargetInput`<br>`value: string` | `by: string = "value"`<br>`timeout: number = 10` |
-| `element_check` | `selector: string / SelectorTargetInput / AccessibilityTargetInput` | `checked: boolean = true`<br>`by_js: boolean = false`<br>`timeout: number = 10` |
-| `frame_list` | — | `limit: integer = 20` |
-| `frame_snapshot` | — | `frame_selector: string = ""`<br>`frame_index: integer = 0`<br>`include_html: boolean = false`<br>`max_elements: integer = 50`<br>`max_text_chars: integer = 4000`<br>`timeout: number = 3` |
-| `frame_find` | `selector: string` | `frame_selector: string = ""`<br>`frame_index: integer = 0`<br>`timeout: number = 3` |
-| `shadow_find` | `host_selector: string`<br>`selector: string` | `timeout: number = 3` |
-| `shadow_find_all` | `host_selector: string`<br>`selector: string` | `limit: integer = 20`<br>`include_html: boolean = false` |
-| `browser_cookies_get` | — | `all_domains: boolean = false`<br>`all_info: boolean = false`<br>`include_values: boolean = false` |
-| `browser_cookies_set` | `cookies: array` | — |
-| `browser_cookies_delete` | `name: string` | `url: string / null = null`<br>`domain: string / null = null`<br>`path: string / null = null` |
-| `browser_cookies_clear` | — | — |
-| `storage_get` | — | `area: string = "local"`<br>`key: string = ""`<br>`include_values: boolean = false` |
-| `storage_set` | `key: string`<br>`value: string` | `area: string = "local"` |
-| `storage_clear` | — | `area: string = "local"`<br>`key: string = ""` |
-| `wait_for_element` | `selector: string / SelectorTargetInput / AccessibilityTargetInput` | `timeout: number = 10` |
-| `wait_for_url` | `url_pattern: string` | `timeout: number = 10` |
+| `page_get_url` | — | `tab_id: string / null = null` |
+| `browser_headers_set` | `headers: object` | `tab_id: string / null = null` |
+| `browser_user_agent_set` | `user_agent: string` | `tab_id: string / null = null`<br>`platform: string / null = null` |
+| `browser_cache_clear` | — | `tab_id: string / null = null` |
+| `browser_permission_get` | `permission: string` | `tab_id: string / null = null` |
+| `browser_permission_set` | `permission: string`<br>`setting: string` | `tab_id: string / null = null`<br>`origin: string / null = null` |
+| `browser_permissions_reset` | — | `tab_id: string / null = null` |
+| `page_dialog_observe` | — | `tab_id: string / null = null`<br>`timeout: number = 0`<br>`max_message_chars: integer = 2000` |
+| `page_dialog_respond` | `action: string` | `tab_id: string / null = null`<br>`prompt_text: string / null = null`<br>`timeout: number = 0.0` |
+| `element_click_and_download` | `selector: string / SelectorTargetInput / AccessibilityTargetInput / CoordinateDownloadTriggerInput / KeyboardDownloadTriggerInput` | `tab_id: string / null = null`<br>`operation_key: string / null = null`<br>`timeout: number = 30.0`<br>`expected_filename: string / null = null`<br>`expected_mime_type: string / null = null` |
+| `page_console_logs` | — | `tab_id: string / null = null`<br>`level: string = "all"`<br>`since: integer = -1`<br>`limit: integer = 20` |
+| `element_find` | `selector: string / SelectorTargetInput / AccessibilityTargetInput` | `tab_id: string / null = null`<br>`timeout: number = 3` |
+| `element_find_all` | `selector: string / SelectorTargetInput / AccessibilityTargetInput` | `tab_id: string / null = null`<br>`limit: integer = 20`<br>`include_html: boolean = false` |
+| `element_click` | `selector: string / SelectorTargetInput / AccessibilityTargetInput` | `tab_id: string / null = null`<br>`timeout: number = 10`<br>`observe: boolean = false`<br>`button: string = "left"`<br>`click_count: integer = 1` |
+| `element_type` | `selector: string / SelectorTargetInput / AccessibilityTargetInput`<br>`text: string` | `tab_id: string / null = null`<br>`timeout: number = 10`<br>`clear: boolean = true`<br>`observe: boolean = false` |
+| `element_get_text` | — | `tab_id: string / null = null`<br>`selector: string / string / SelectorTargetInput / AccessibilityTargetInput = ""` |
+| `element_get_attribute` | `selector: string / SelectorTargetInput / AccessibilityTargetInput`<br>`attribute: string` | `tab_id: string / null = null` |
+| `element_get_property` | `selector: string / SelectorTargetInput / AccessibilityTargetInput`<br>`property: string` | `tab_id: string / null = null` |
+| `element_get_html` | — | `tab_id: string / null = null`<br>`selector: string / string / SelectorTargetInput / AccessibilityTargetInput = ""` |
+| `element_state_get` | `selector: string / SelectorTargetInput / AccessibilityTargetInput` | `tab_id: string / null = null`<br>`timeout: number = 3` |
+| `element_upload_file` | `selector: string / SelectorTargetInput / AccessibilityTargetInput`<br>`paths: array` | `tab_id: string / null = null`<br>`timeout: number = 10` |
+| `element_click_and_upload` | `selector: string / SelectorTargetInput / AccessibilityTargetInput`<br>`paths: array` | `tab_id: string / null = null`<br>`timeout: number = 10.0` |
+| `page_scroll` | — | `tab_id: string / null = null`<br>`direction: string = "down"`<br>`pixels: integer = 300`<br>`x: integer = 0`<br>`y: integer = 0` |
+| `element_scroll_into_view` | `selector: string / SelectorTargetInput / AccessibilityTargetInput` | `tab_id: string / null = null`<br>`center: boolean = true`<br>`timeout: number = 10` |
+| `element_hover` | `selector: string / SelectorTargetInput / AccessibilityTargetInput` | `tab_id: string / null = null`<br>`timeout: number = 10`<br>`offset_x: integer / null = null`<br>`offset_y: integer / null = null` |
+| `keyboard_press` | `keys: string` | `tab_id: string / null = null`<br>`interval: number = 0` |
+| `element_select` | `selector: string / SelectorTargetInput / AccessibilityTargetInput`<br>`value: string` | `tab_id: string / null = null`<br>`by: string = "value"`<br>`timeout: number = 10` |
+| `element_check` | `selector: string / SelectorTargetInput / AccessibilityTargetInput` | `tab_id: string / null = null`<br>`checked: boolean = true`<br>`by_js: boolean = false`<br>`timeout: number = 10` |
+| `frame_list` | — | `tab_id: string / null = null`<br>`limit: integer = 20` |
+| `frame_snapshot` | — | `tab_id: string / null = null`<br>`frame_selector: string = ""`<br>`frame_index: integer = 0`<br>`include_html: boolean = false`<br>`max_elements: integer = 50`<br>`max_text_chars: integer = 4000`<br>`timeout: number = 3` |
+| `frame_find` | `selector: string` | `tab_id: string / null = null`<br>`frame_selector: string = ""`<br>`frame_index: integer = 0`<br>`timeout: number = 3` |
+| `shadow_find` | `host_selector: string`<br>`selector: string` | `tab_id: string / null = null`<br>`timeout: number = 3` |
+| `shadow_find_all` | `host_selector: string`<br>`selector: string` | `tab_id: string / null = null`<br>`limit: integer = 20`<br>`include_html: boolean = false` |
+| `browser_cookies_get` | — | `tab_id: string / null = null`<br>`all_domains: boolean = false`<br>`all_info: boolean = false`<br>`include_values: boolean = false` |
+| `browser_cookies_set` | `cookies: array` | `tab_id: string / null = null` |
+| `browser_cookies_delete` | `name: string` | `tab_id: string / null = null`<br>`url: string / null = null`<br>`domain: string / null = null`<br>`path: string / null = null` |
+| `browser_cookies_clear` | — | `tab_id: string / null = null` |
+| `storage_get` | — | `tab_id: string / null = null`<br>`area: string = "local"`<br>`key: string = ""`<br>`include_values: boolean = false` |
+| `storage_set` | `key: string`<br>`value: string` | `tab_id: string / null = null`<br>`area: string = "local"` |
+| `storage_clear` | — | `tab_id: string / null = null`<br>`area: string = "local"`<br>`key: string = ""` |
+| `wait_for_element` | `selector: string / SelectorTargetInput / AccessibilityTargetInput` | `tab_id: string / null = null`<br>`timeout: number = 10` |
+| `wait_for_url` | `url_pattern: string` | `tab_id: string / null = null`<br>`timeout: number = 10` |
 | `wait_time` | `seconds: number` | — |
-| `wait_until` | `condition: string` | `selector: string / string / SelectorTargetInput / AccessibilityTargetInput = ""`<br>`value: string = ""`<br>`name: string = ""`<br>`timeout: number = 10`<br>`interval: number = 0.1`<br>`stable_ms: integer = 300` |
-| `network_listen_start` | — | `targets: array`<br>`is_regex: boolean = false`<br>`method: string = ""`<br>`resource_type: string = ""`<br>`clear: boolean = true` |
-| `network_listen_wait` | — | `timeout: number = 5.0`<br>`limit: integer = 10`<br>`include_headers: boolean = false`<br>`include_body: boolean = false`<br>`max_body_chars: integer = 2000` |
-| `network_listen_stop` | — | `clear: boolean = true` |
-| `network_blocked_urls_set` | `urls: array` | — |
+| `wait_until` | `condition: string` | `tab_id: string / null = null`<br>`selector: string / string / SelectorTargetInput / AccessibilityTargetInput = ""`<br>`value: string = ""`<br>`name: string = ""`<br>`timeout: number = 10`<br>`interval: number = 0.1`<br>`stable_ms: integer = 300` |
+| `network_listen_start` | — | `tab_id: string / null = null`<br>`targets: array`<br>`is_regex: boolean = false`<br>`method: string = ""`<br>`resource_type: string = ""`<br>`clear: boolean = true` |
+| `network_listen_wait` | — | `tab_id: string / null = null`<br>`timeout: number = 5.0`<br>`limit: integer = 10`<br>`include_headers: boolean = false`<br>`include_body: boolean = false`<br>`max_body_chars: integer = 2000` |
+| `network_listen_stop` | — | `tab_id: string / null = null`<br>`clear: boolean = true` |
+| `network_blocked_urls_set` | `urls: array` | `tab_id: string / null = null` |
 <!-- GENERATED:TOOL-PARAMETERS:END -->
 
 ## Tool Inventory
 
-The 0.8.6 registry contains 69 typed browser tools. Site, component, challenge,
+The 0.8.7 registry contains 69 typed browser tools. Site, component, challenge,
 and business workflows are composed by clients or optional external Skills.
+
+### Tab Targeting And Scheduling
+
+- All 63 tab-scoped tools accept optional `tab_id`. Both stable MCP ids and
+  native DrissionPage tab ids resolve to the same tracked `PageTab`; successful
+  results always return the stable MCP id.
+- `tab_id=null` is a compatibility fallback, not a late-bound alias. The server
+  captures the current tab before browser work and keeps that object bound for
+  the entire call.
+- Actions on the same tab are serialized. Actions on independent tabs may run
+  concurrently. Dialog observe/respond retain their intentional overlap with
+  the action that opens a native modal, while still counting as in-flight work.
+- `tab_close` marks the target as closing, rejects new calls with `TAB_CLOSED`,
+  waits for claimed actions to finish, then closes it. Browser cleanup drains
+  all tracked tabs before quitting Chromium.
+- `page_navigate(new_tab=true)` may set `background`, `new_window`, or
+  `new_context`. Background creation preserves the MCP current tab. A
+  `new_context` tab owns a disposable Chromium browser context that is released
+  by `tab_close`.
+- Exact-once artifact operations bind `operation_key` fingerprints to the
+  resolved tab. Reusing a key on another tab returns `OPERATION_KEY_CONFLICT`;
+  it cannot replay an artifact or download receipt from the original tab.
 
 ### Reusable Element Targets
 
@@ -349,7 +389,7 @@ upload, scroll, hover, select, check, state, wait, and click-download tools.
 
 | Tool | Type | Required input | Description |
 | --- | --- | --- | --- |
-| `page_navigate` | Destructive | `url` | Open a URL in the active browser tab. Optional: `new_tab`, `observe`. |
+| `page_navigate` | Destructive | `url` | Open a URL in the captured/existing target, or create a new target. Optional: `tab_id`, `new_tab`, `background`, `new_window`, `new_context`, `observe`. Creation options require `new_tab=true`; `tab_id` and `new_tab=true` are mutually exclusive. |
 | `page_navigate_with_http_auth` | Destructive | `url`, `username`, `password` | Create a dedicated Chromium BrowserContext, answer one bounded HTTP auth challenge, clean Fetch handlers, and retain the authenticated tab until `tab_close`. Credentials are never returned. Optional: `realm`, `timeout`. |
 | `page_go_back` | Destructive | none | Go back in browser history. |
 | `page_go_forward` | Destructive | none | Go forward in browser history. |
@@ -361,7 +401,7 @@ upload, scroll, hover, select, check, state, wait, and click-download tools.
 | --- | --- | --- | --- |
 | `tab_list` | Read-only | none | List open browser tabs with stable MCP tab IDs, native tab IDs, URLs, titles, and active state. |
 | `tab_switch` | Destructive | `tab_id` | Switch to a tab returned by `tab_list`. |
-| `tab_close` | Destructive | `tab_id` | Close one browser tab without closing the whole browser. |
+| `tab_close` | Destructive | `tab_id` | Reject new calls for one tab, drain its in-flight actions, then close it without closing the whole browser. |
 
 ### Page Operations
 
@@ -459,7 +499,7 @@ Resource caps:
 
 ## Prompts
 
-DrissionPage MCP 0.8.6 exposes no MCP prompts. `tools/list`, typed schemas, and
+DrissionPage MCP 0.8.7 exposes no MCP prompts. `tools/list`, typed schemas, and
 typed errors describe the standalone core; procedural guidance belongs in
 optional Skills.
 
@@ -475,7 +515,7 @@ optional Skills.
 - `page_dialog_observe` returns a bounded pending-dialog message without accepting or dismissing it. Observation and response bypass ordinary browser-operation serialization so they can overlap the native click that opened a blocking dialog; no user action is required.
 - `page_dialog_respond` checks immediately by default. No pending dialog returns `DIALOG_NOT_FOUND`; a positive `timeout` can overlap a not-yet-opened dialog. Capability gaps return `UNSUPPORTED_OPERATION`; prompt text and dialog messages are not retained in action history.
 - `element_click_and_download` requires an approved `DP_MCP_DOWNLOAD_ROOT`. Its required `selector` field accepts existing selector/accessibility values plus strict `{kind: "coordinate", ...}` and `{kind: "keyboard", ...}` triggers; arbitrary scripts and action sequences are rejected. A successful response includes one checksum-verified regular file, safe relative path, sanitized HTTP(S) source URL, `ArtifactRef`, and correlated `ActionReceipt`. Keyboard trigger output contains redacted key length metadata, never the keys. Replaying the same operation key does not trigger again; failure and indeterminate results contain no artifact.
-- `tab_list` synchronizes with browser tabs opened by normal page behavior, including `target="_blank"` links.
+- `tab_list` synchronizes with browser tabs opened by normal page behavior, including `target="_blank"` links, without replacing an MCP-selected current tab merely because Chromium's latest tab changed.
 - `page_observe` is designed for compact state checks. Use `page_snapshot` when you need selectors and structured page outline details. Its `console` field summarizes recent current-tab console messages when DrissionPage console capture is available.
 - `page_console_logs` returns normalized console messages with `index`, `level`, `text`, `url`, `line`, `column`, and `source`. Use `since` with the previous `next_cursor` to fetch only newer messages.
 - `page_evaluate` accepts a JavaScript function body; use `return` for values you want in `structuredContent.data.result`. The result is bounded by `max_chars`. Top-level `Infinity`, `-Infinity`, and `NaN` preserve `result_type: "number"`, return JSON `null`, and add `non_finite_number`; all public JSON mirrors use strict standards-compliant serialization.

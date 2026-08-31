@@ -43,7 +43,7 @@ from ..tool_outputs import (
     CapabilityProbe,
     ElementClickAndDownloadData,
 )
-from .base import ToolInput, ToolOutcome, ToolType, define_tool
+from .base import TabScopedInput, ToolOutcome, ToolType, define_tool, identity_tab_id
 
 if TYPE_CHECKING:
     from ..context import DrissionPageContext
@@ -96,7 +96,7 @@ StructuredDownloadTrigger = Annotated[
 DownloadTriggerArg = TargetString | StructuredDownloadTrigger
 
 
-class ElementClickAndDownloadInput(ToolInput):
+class ElementClickAndDownloadInput(TabScopedInput):
     """Strict request for one native click and one correlated download."""
 
     selector: DownloadTriggerArg = Field(
@@ -214,15 +214,18 @@ def _download_identity(
     if operation_key is None:
         action_id = context.new_action_id()
         operation_key = f"download-{action_id}"
+    resolved_tab_id = identity_tab_id(context, args.tab_id, operation_key)
+    request = {
+        "tab_id": resolved_tab_id,
+        "selector": _download_trigger_payload(args.selector),
+        "operation_key": operation_key,
+        "timeout": args.timeout,
+        "expected_filename": args.expected_filename,
+        "expected_mime_type": args.expected_mime_type,
+        "resolved_tab_id": resolved_tab_id,
+    }
     fingerprint = context.request_fingerprint(
-        {
-            "tool": "element_click_and_download",
-            "selector": _download_trigger_payload(args.selector),
-            "operation_key": operation_key,
-            "timeout": args.timeout,
-            "expected_filename": args.expected_filename,
-            "expected_mime_type": args.expected_mime_type,
-        }
+        {"tool": "element_click_and_download", **request}
     )
     return action_id, operation_key, fingerprint
 
@@ -570,6 +573,7 @@ def _download_data(
     data = {
         "status": receipt.status,
         "operation_key": state.preflight.operation_key,
+        "tab_id": receipt.tab_id,
         **state.preflight.target_metadata,
         "artifact": (
             artifact.model_dump(mode="json") if artifact is not None else None

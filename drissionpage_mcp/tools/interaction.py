@@ -16,7 +16,7 @@ from ..tool_outputs import (
     KeyboardPressData,
     PageScrollData,
 )
-from .base import ToolInput, ToolOutcome, ToolType, define_tool
+from .base import TabScopedInput, ToolOutcome, ToolType, define_tool
 
 if TYPE_CHECKING:
     from ..context import DrissionPageContext
@@ -26,7 +26,7 @@ ScrollDirection = Literal[
 SelectBy = Literal["value", "text", "index"]
 
 
-class PageScrollInput(ToolInput):
+class PageScrollInput(TabScopedInput):
     """Input schema for page scrolling."""
 
     direction: ScrollDirection = Field(
@@ -43,7 +43,7 @@ class PageScrollInput(ToolInput):
     y: int = Field(default=0, ge=0, description="Y coordinate for direction=position.")
 
 
-class ElementScrollIntoViewInput(ToolInput):
+class ElementScrollIntoViewInput(TabScopedInput):
     """Input schema for scrolling an element into view."""
 
     selector: ElementTargetArg = Field(
@@ -55,7 +55,7 @@ class ElementScrollIntoViewInput(ToolInput):
     timeout: float = Field(default=10, ge=0, le=MAX_WAIT_SECONDS)
 
 
-class ElementHoverInput(ToolInput):
+class ElementHoverInput(TabScopedInput):
     """Input schema for hovering an element."""
 
     selector: ElementTargetArg = Field(
@@ -66,7 +66,7 @@ class ElementHoverInput(ToolInput):
     offset_y: int | None = Field(default=None, description="Optional hover Y offset.")
 
 
-class KeyboardPressInput(ToolInput):
+class KeyboardPressInput(TabScopedInput):
     """Input schema for sending keys to the active element."""
 
     keys: str = Field(..., description="Text or DrissionPage key string to send.")
@@ -78,7 +78,7 @@ class KeyboardPressInput(ToolInput):
     )
 
 
-class ElementSelectInput(ToolInput):
+class ElementSelectInput(TabScopedInput):
     """Input schema for selecting an option."""
 
     selector: ElementTargetArg = Field(
@@ -91,7 +91,7 @@ class ElementSelectInput(ToolInput):
     timeout: float = Field(default=10, ge=0, le=MAX_WAIT_SECONDS)
 
 
-class ElementCheckInput(ToolInput):
+class ElementCheckInput(TabScopedInput):
     """Input schema for checkbox/radio state."""
 
     selector: ElementTargetArg = Field(

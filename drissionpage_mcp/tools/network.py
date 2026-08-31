@@ -15,8 +15,8 @@ from ..tool_outputs import (
     NetworkListenWaitData,
 )
 from .base import (
+    TabScopedInput,
     ToolExecutionMode,
-    ToolInput,
     ToolOutcome,
     ToolType,
     define_tool,
@@ -32,7 +32,7 @@ BlockedUrlPattern = Annotated[
 ]
 
 
-class NetworkListenStartInput(ToolInput):
+class NetworkListenStartInput(TabScopedInput):
     """Input schema for starting HTTP/XHR/Fetch observation."""
 
     targets: list[str] = Field(
@@ -55,7 +55,7 @@ class NetworkListenStartInput(ToolInput):
     )
 
 
-class NetworkListenWaitInput(ToolInput):
+class NetworkListenWaitInput(TabScopedInput):
     """Input schema for waiting on observed packets."""
 
     timeout: float = Field(
@@ -82,7 +82,7 @@ class NetworkListenWaitInput(ToolInput):
     )
 
 
-class NetworkListenStopInput(ToolInput):
+class NetworkListenStopInput(TabScopedInput):
     """Input schema for stopping packet observation."""
 
     clear: bool = Field(
@@ -90,7 +90,7 @@ class NetworkListenStopInput(ToolInput):
     )
 
 
-class NetworkBlockedUrlsSetInput(ToolInput):
+class NetworkBlockedUrlsSetInput(TabScopedInput):
     """Input schema for replacing blocked URL patterns."""
 
     urls: list[BlockedUrlPattern] = Field(

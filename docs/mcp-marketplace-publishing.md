@@ -36,8 +36,8 @@ marketplace.
 3. Create and push the release tag, for example:
 
    ```bash
-   git tag v0.8.6
-   git push origin v0.8.6
+   git tag v0.8.7
+   git push origin v0.8.7
    ```
 
 4. Approve the GitHub `pypi` environment if it is protected, then wait for the

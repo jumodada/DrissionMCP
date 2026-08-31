@@ -1519,6 +1519,10 @@ async def test_navigation_tools_success_paths() -> None:
         "url": "https://example.test/next",
         "final_url": "https://example.test/next",
         "new_tab": False,
+        "background": False,
+        "new_window": False,
+        "new_context": False,
+        "active": True,
         "tab_id": "t0",
     }
     assert "Successfully navigated" in _message(nav_response)
@@ -1551,7 +1555,7 @@ async def test_navigation_tools_success_paths() -> None:
         (navigate.go_forward, "go_forward", "went forward"),
         (navigate.refresh, "refresh", "refreshed page"),
     ]:
-        response = await _execute(tool, ctx, navigate.EmptyInput())
+        response = await _execute(tool, ctx, navigate.TabScopedEmptyInput())
         assert response.structured_content()["data"] == {
             "url": "https://example.test/next"
         }
@@ -1653,7 +1657,7 @@ def test_get_property_input_uses_property_field_only() -> None:
         (common.ScreenshotInput, {"fullPage": True}),
         (common.ScreenshotInput, {"path": "/tmp/screen.png"}),
         (common.ResizeInput, {"width": 800, "height": 600, "extra": True}),
-        (navigate.NavigateInput, {"url": "https://example.test", "background": True}),
+        (navigate.NavigateInput, {"url": "https://example.test", "foreground": True}),
         (element.FindElementInput, {"selector": "h1", "timeout_ms": 1}),
         (element.FindAllElementsInput, {"selector": "li", "max_items": 10}),
         (

@@ -11,13 +11,13 @@ from ..policy import PolicyDeniedError, validate_upload_paths
 from ..response_errors import ErrorCode
 from ..target import ElementTargetArg, target_label
 from ..tool_outputs import ElementClickAndUploadData, ElementUploadFileData
-from .base import ToolInput, ToolOutcome, ToolType, define_tool
+from .base import TabScopedInput, ToolOutcome, ToolType, define_tool
 
 if TYPE_CHECKING:
     from ..context import DrissionPageContext
 
 
-class UploadFileInput(ToolInput):
+class UploadFileInput(TabScopedInput):
     """Input schema for file uploads."""
 
     selector: ElementTargetArg = Field(
@@ -42,7 +42,7 @@ UploadPath = Annotated[
 ]
 
 
-class ElementClickAndUploadInput(ToolInput):
+class ElementClickAndUploadInput(TabScopedInput):
     """Input for one browser-owned file chooser click and upload."""
 
     selector: ElementTargetArg = Field(

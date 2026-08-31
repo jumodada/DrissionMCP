@@ -9,13 +9,13 @@ from pydantic import Field
 from ..limits import MAX_WAIT_SECONDS
 from ..metadata import with_response_meta
 from ..tool_outputs import ShadowFindAllData, ShadowFindData
-from .base import ToolInput, ToolOutcome, ToolType, define_tool
+from .base import TabScopedInput, ToolOutcome, ToolType, define_tool
 
 if TYPE_CHECKING:
     from ..context import DrissionPageContext
 
 
-class ShadowFindInput(ToolInput):
+class ShadowFindInput(TabScopedInput):
     """Input schema for finding one element inside an exposed shadow root."""
 
     host_selector: str = Field(..., description="Selector for the shadow host element.")
@@ -23,7 +23,7 @@ class ShadowFindInput(ToolInput):
     timeout: float = Field(default=3, ge=0, le=MAX_WAIT_SECONDS)
 
 
-class ShadowFindAllInput(ToolInput):
+class ShadowFindAllInput(TabScopedInput):
     """Input schema for repeated elements inside an exposed shadow root."""
 
     host_selector: str = Field(..., description="Selector for the shadow host element.")

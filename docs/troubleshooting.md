@@ -7,7 +7,7 @@ Use this guide when the MCP server does not start, tools do not appear, or brows
 Run these commands from a shell:
 
 ```bash
-python -m pip install -U "drissionpage-mcp>=0.8.6"
+python -m pip install -U "drissionpage-mcp>=0.8.7"
 drissionpage-mcp --version
 drissionpage-mcp doctor
 drissionpage-mcp doctor --launch-browser
@@ -35,7 +35,7 @@ If logs show tools loading and then fail with
 incompatible MCP Python SDK 2.x. Repair both packages explicitly:
 
 ```bash
-python -m pip install -U "drissionpage-mcp>=0.8.6" "mcp>=1.0.0,<2"
+python -m pip install -U "drissionpage-mcp>=0.8.7" "mcp>=1.0.0,<2"
 drissionpage-mcp doctor
 ```
 
@@ -114,7 +114,7 @@ user-agent, cache, and URL-blocking tools are included by default; no capability
 profile or `full` mode is required.
 
 
-## Task Completion / Challenge Surface 0.8.6 Checks
+## Task Completion / Challenge Surface 0.8.7 Checks
 
 - For vision-directed hover/reveal actions, use `page_pointer_move`; for activation, use `page_click_xy`; for a selector-backed element/track drag use `page_pointer_drag_element`; for a bounded visual-coordinate drag use `page_pointer_drag`. Add up to six ordered `waypoints` only when the held gesture must follow a multi-segment path. Pointer tools default to `profile="direct"`; set `profile="natural"` for a deterministic 24-step eased trajectory with an exact endpoint.
 - In a fresh session, call `page_navigate`, then collect `page_snapshot` or `page_observe` explicitly.
@@ -144,7 +144,7 @@ For the release reliability gate, run the deterministic public-tool benchmark:
 DP_HEADLESS=1 DP_NO_SANDBOX=1 DP_MCP_REQUIRE_BROWSER=1 \
 python -m tests.evals.task_completion_benchmark \
   --iterations 10 \
-  --output benchmark-results/0.8.6-task-completion.json
+  --output benchmark-results/0.8.7-task-completion.json
 ```
 
 Run the local challenge-surface matrix and the explicitly opt-in official

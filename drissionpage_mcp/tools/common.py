@@ -23,7 +23,14 @@ from ..tool_outputs import (
     PageScreenshotSaveData,
     PageSnapshotData,
 )
-from .base import EmptyInput, ToolInput, ToolOutcome, ToolType, define_tool
+from .base import (
+    EmptyInput,
+    TabScopedEmptyInput,
+    TabScopedInput,
+    ToolOutcome,
+    ToolType,
+    define_tool,
+)
 
 if TYPE_CHECKING:
     from ..context import DrissionPageContext
@@ -51,14 +58,14 @@ PlatformValue = Annotated[
 ]
 
 
-class ResizeInput(ToolInput):
+class ResizeInput(TabScopedInput):
     """Input schema for resize tool."""
 
     width: int = Field(..., description="Width of the browser window")
     height: int = Field(..., description="Height of the browser window")
 
 
-class ScreenshotInput(ToolInput):
+class ScreenshotInput(TabScopedInput):
     """Input schema for screenshot tool."""
 
     full_page: bool = Field(default=False, description="Take a full page screenshot")
@@ -73,7 +80,7 @@ class ScreenshotSaveInput(ScreenshotInput):
     )
 
 
-class PageSnapshotInput(ToolInput):
+class PageSnapshotInput(TabScopedInput):
     """Input schema for page snapshot tool."""
 
     include_html: bool = Field(
@@ -94,7 +101,7 @@ class PageSnapshotInput(ToolInput):
     )
 
 
-class PageAccessibilitySnapshotInput(ToolInput):
+class PageAccessibilitySnapshotInput(TabScopedInput):
     """Input schema for a bounded accessibility-tree snapshot."""
 
     scope: ElementTargetArg | None = Field(
@@ -109,7 +116,7 @@ class PageAccessibilitySnapshotInput(ToolInput):
     )
 
 
-class PageObserveInput(ToolInput):
+class PageObserveInput(TabScopedInput):
     """Input schema for compact page observation."""
 
     max_texts: int = Field(
@@ -126,7 +133,7 @@ class PageObserveInput(ToolInput):
     )
 
 
-class PageEvaluateInput(ToolInput):
+class PageEvaluateInput(TabScopedInput):
     """Input schema for bounded JavaScript evaluation."""
 
     script: str = Field(
@@ -145,7 +152,7 @@ class PageEvaluateInput(ToolInput):
     )
 
 
-class BrowserHeadersSetInput(ToolInput):
+class BrowserHeadersSetInput(TabScopedInput):
     """Input schema for replacing extra HTTP request headers."""
 
     headers: dict[HeaderName, HeaderValue] = Field(
@@ -155,7 +162,7 @@ class BrowserHeadersSetInput(ToolInput):
     )
 
 
-class BrowserUserAgentSetInput(ToolInput):
+class BrowserUserAgentSetInput(TabScopedInput):
     """Input schema for overriding the current tab's user agent."""
 
     user_agent: UserAgentValue
@@ -366,13 +373,15 @@ async def close(context: "DrissionPageContext", args: EmptyInput) -> "ToolOutcom
     name="page_get_url",
     title="Get Current URL",
     description="Get the current URL of the page",
-    input_schema=EmptyInput,
+    input_schema=TabScopedEmptyInput,
     tool_type=ToolType.READ_ONLY,
     idempotent=True,
     output_model=PageGetUrlData,
     failure_message=lambda args, exc: "Failed to get URL: " + str(exc),
 )
-async def get_url(context: "DrissionPageContext", args: EmptyInput) -> "ToolOutcome":
+async def get_url(
+    context: "DrissionPageContext", args: TabScopedEmptyInput
+) -> "ToolOutcome":
     """Get current URL."""
     outcome = ToolOutcome()
     tab = context.current_tab_or_die()
@@ -431,14 +440,14 @@ async def browser_user_agent_set(
     name="browser_cache_clear",
     title="Clear Browser Cache",
     description="Clear HTTP cache without clearing cookies or Web Storage.",
-    input_schema=EmptyInput,
+    input_schema=TabScopedEmptyInput,
     tool_type=ToolType.DESTRUCTIVE,
     idempotent=True,
     output_model=BrowserCacheClearData,
     failure_message=lambda args, exc: "Failed to clear browser cache: " + str(exc),
 )
 async def browser_cache_clear(
-    context: "DrissionPageContext", args: EmptyInput
+    context: "DrissionPageContext", args: TabScopedEmptyInput
 ) -> "ToolOutcome":
     outcome = ToolOutcome()
     tab = context.current_tab_or_die()

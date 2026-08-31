@@ -26,6 +26,22 @@ class ToolData(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
 
+class TabScopedData(ToolData):
+    """Success payload base for operations bound to one browser tab.
+
+    The field is optional for direct handler/unit-test calls and is populated by
+    the server after it captures the target tab.  Keeping it on a dedicated base
+    avoids adding target metadata to browser-wide or context-only responses.
+    """
+
+    tab_id: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=128,
+        description="MCP tab id captured for this operation.",
+    )
+
+
 class ContractData(BaseModel):
     """Strict immutable base for shared task-runtime contracts."""
 
@@ -232,10 +248,14 @@ class CapabilitySet(ContractData):
     )
 
 
-class PageNavigateData(ToolData):
+class PageNavigateData(TabScopedData):
     url: str
     final_url: str
     new_tab: bool
+    background: bool = False
+    new_window: bool = False
+    new_context: bool = False
+    active: bool = True
     tab_id: str
     changes: dict[str, Any] | None = None
 
@@ -255,15 +275,15 @@ class PageNavigateWithHttpAuthData(ToolData):
     credentials_redacted: Literal[True] | None = None
 
 
-class PageGoBackData(ToolData):
+class PageGoBackData(TabScopedData):
     url: str
 
 
-class PageGoForwardData(ToolData):
+class PageGoForwardData(TabScopedData):
     url: str
 
 
-class PageRefreshData(ToolData):
+class PageRefreshData(TabScopedData):
     url: str
 
 
@@ -286,16 +306,16 @@ class TabCloseData(ToolData):
     active_tab_id: str
 
 
-class PageResizeData(ToolData):
+class PageResizeData(TabScopedData):
     width: int
     height: int
 
 
-class PageScreenshotData(ToolData):
+class PageScreenshotData(TabScopedData):
     screenshot: dict[str, Any]
 
 
-class PageScreenshotSaveData(ToolData):
+class PageScreenshotSaveData(TabScopedData):
     screenshot: dict[str, Any]
 
 
@@ -306,7 +326,7 @@ class PageExportArtifactReceipt(ActionReceipt):
     artifact_ids: Annotated[tuple[ContractId, ...], Field(min_length=1, max_length=1)]
 
 
-class PageExportArtifactData(ToolData):
+class PageExportArtifactData(TabScopedData):
     operation_key: str
     format: Literal["pdf", "mhtml"]
     artifact: ArtifactRef
@@ -329,7 +349,7 @@ class PageExportArtifactData(ToolData):
         return self
 
 
-class PageSnapshotData(ToolData):
+class PageSnapshotData(TabScopedData):
     url: str
     title: str
     text_excerpt: str
@@ -344,7 +364,7 @@ class PageSnapshotData(ToolData):
     meta: dict[str, Any]
 
 
-class PageObservation(ToolData):
+class PageObservation(TabScopedData):
     url: str
     title: str
     ready_state: str
@@ -355,7 +375,7 @@ class PageObservation(ToolData):
     limits: dict[str, Any]
 
 
-class PageEvaluateData(ToolData):
+class PageEvaluateData(TabScopedData):
     result: Any
     result_type: str
     non_finite_number: Literal["Infinity", "-Infinity", "NaN"] | None = None
@@ -379,7 +399,7 @@ class PointerMotionData(PointerMoveData):
     delay_before_press_ms: int
 
 
-class PagePointerMoveData(ToolData):
+class PagePointerMoveData(TabScopedData):
     x: float
     y: float
     element: str
@@ -400,7 +420,7 @@ class PointerDragData(ToolData):
     planned_duration_ms: int
 
 
-class PagePointerDragData(ToolData):
+class PagePointerDragData(TabScopedData):
     start_x: float
     start_y: float
     end_x: float
@@ -442,14 +462,14 @@ class PointerDragElementDestinationData(ToolData):
     axis: Literal["x", "y"] | None = None
 
 
-class PagePointerDragElementData(ToolData):
+class PagePointerDragElementData(TabScopedData):
     source: ResolvedPointerTargetData
     destination: PointerDragElementDestinationData
     url: str
     motion: PointerDragData
 
 
-class PageClickXYData(ToolData):
+class PageClickXYData(TabScopedData):
     x: float
     y: float
     element: str
@@ -461,35 +481,35 @@ class PageCloseData(ToolData):
     closed: Literal[True]
 
 
-class PageGetUrlData(ToolData):
+class PageGetUrlData(TabScopedData):
     url: str
 
 
-class BrowserHeadersSetData(ToolData):
+class BrowserHeadersSetData(TabScopedData):
     count: int
     headers: dict[str, str]
     set: Literal[True]
 
 
-class BrowserUserAgentSetData(ToolData):
+class BrowserUserAgentSetData(TabScopedData):
     previous_user_agent: str
     user_agent: str
     platform: str | None
     set: Literal[True]
 
 
-class BrowserCacheClearData(ToolData):
+class BrowserCacheClearData(TabScopedData):
     cleared: Literal[True]
 
 
-class BrowserPermissionGetData(ToolData):
+class BrowserPermissionGetData(TabScopedData):
     permission: str
     state: Literal["granted", "denied", "prompt", "unsupported"]
     origin: str
     query_supported: bool
 
 
-class BrowserPermissionSetData(ToolData):
+class BrowserPermissionSetData(TabScopedData):
     permission: str
     setting: Literal["granted", "denied", "prompt"]
     origin: str
@@ -499,12 +519,12 @@ class BrowserPermissionSetData(ToolData):
     context_scope: Literal["current_browser_context"]
 
 
-class BrowserPermissionsResetData(ToolData):
+class BrowserPermissionsResetData(TabScopedData):
     reset: Literal[True]
     context_scope: Literal["current_browser_context"]
 
 
-class ConsoleLogsData(ToolData):
+class ConsoleLogsData(TabScopedData):
     available: bool
     listening: bool
     count: int
@@ -513,7 +533,7 @@ class ConsoleLogsData(ToolData):
     logs: list[dict[str, Any]]
 
 
-class ElementTargetData(ToolData):
+class ElementTargetData(TabScopedData):
     selector: str
     locator: str
     selector_strategy: str
@@ -526,7 +546,7 @@ class ElementTargetData(ToolData):
     exact: bool | None = None
 
 
-class ElementFindData(ToolData):
+class ElementFindData(TabScopedData):
     element: dict[str, Any]
 
 
@@ -600,7 +620,7 @@ DownloadTriggerData = Annotated[
 ]
 
 
-class _ElementClickAndDownloadDataBase(ToolData):
+class _ElementClickAndDownloadDataBase(TabScopedData):
     model_config = ConfigDict(
         json_schema_extra={
             "oneOf": [
@@ -845,7 +865,7 @@ class ElementViewportEvidenceData(ToolData):
     presentation: ElementPresentationData
 
 
-class PageScrollData(ToolData):
+class PageScrollData(TabScopedData):
     direction: str
     pixels: int
     x: int
@@ -867,7 +887,7 @@ class ElementHoverData(ElementTargetData):
     offset_y: int | None
 
 
-class KeyboardPressData(ToolData):
+class KeyboardPressData(TabScopedData):
     keys: KeyboardInputMetadata
     interval: float
     url: str
@@ -896,7 +916,7 @@ class DialogPromptMetadata(ToolData):
     redacted: Literal[True]
 
 
-class PageDialogRespondData(ToolData):
+class PageDialogRespondData(TabScopedData):
     dialog_type: Literal["alert", "confirm", "prompt"]
     action: Literal["accept", "dismiss"]
     handled: Literal[True]
@@ -906,7 +926,7 @@ class PageDialogRespondData(ToolData):
     receipt: ActionReceipt
 
 
-class PageDialogObserveData(ToolData):
+class PageDialogObserveData(TabScopedData):
     pending: bool
     timed_out: bool
     dialog_type: Literal["alert", "confirm", "prompt"] | None
@@ -927,14 +947,14 @@ class FrameSummaryData(ToolData):
     outer: ElementViewportEvidenceData
 
 
-class FrameListData(ToolData):
+class FrameListData(TabScopedData):
     count: int
     returned: int
     limit: int
     frames: list[FrameSummaryData]
 
 
-class FrameSnapshotData(ToolData):
+class FrameSnapshotData(TabScopedData):
     frame: FrameSummaryData
     url: str
     title: str
@@ -950,17 +970,17 @@ class FrameSnapshotData(ToolData):
     meta: dict[str, Any]
 
 
-class FrameFindData(ToolData):
+class FrameFindData(TabScopedData):
     frame: FrameSummaryData
     element: dict[str, Any]
 
 
-class ShadowFindData(ToolData):
+class ShadowFindData(TabScopedData):
     host: dict[str, Any]
     element: dict[str, Any]
 
 
-class ShadowFindAllData(ToolData):
+class ShadowFindAllData(TabScopedData):
     host: dict[str, Any]
     target: dict[str, Any]
     count: int
@@ -971,7 +991,7 @@ class ShadowFindAllData(ToolData):
     meta: dict[str, Any]
 
 
-class BrowserCookiesGetData(ToolData):
+class BrowserCookiesGetData(TabScopedData):
     count: int
     include_values: bool
     all_domains: bool
@@ -992,13 +1012,13 @@ class BrowserCookieWriteData(ToolData):
     source_scheme: Literal["Unset", "NonSecure", "Secure"] | None = None
 
 
-class BrowserCookiesSetData(ToolData):
+class BrowserCookiesSetData(TabScopedData):
     count: int
     set: Literal[True]
     cookies: list[BrowserCookieWriteData]
 
 
-class BrowserCookiesDeleteData(ToolData):
+class BrowserCookiesDeleteData(TabScopedData):
     name: str
     url: str | None
     domain: str | None
@@ -1006,11 +1026,11 @@ class BrowserCookiesDeleteData(ToolData):
     deleted: Literal[True]
 
 
-class BrowserCookiesClearData(ToolData):
+class BrowserCookiesClearData(TabScopedData):
     cleared: Literal[True]
 
 
-class StorageGetData(ToolData):
+class StorageGetData(TabScopedData):
     area: str
     key: str
     include_values: bool
@@ -1018,13 +1038,13 @@ class StorageGetData(ToolData):
     items: dict[str, str]
 
 
-class StorageSetData(ToolData):
+class StorageSetData(TabScopedData):
     area: str
     key: str
     set: Literal[True]
 
 
-class StorageClearData(ToolData):
+class StorageClearData(TabScopedData):
     area: str
     key: str
     cleared: Literal[True]
@@ -1064,7 +1084,7 @@ class AccessibilityNodeData(ToolData):
     properties: dict[str, Any]
 
 
-class PageAccessibilitySnapshotData(ToolData):
+class PageAccessibilitySnapshotData(TabScopedData):
     nodes: list[AccessibilityNodeData]
     count: int
     returned: int
@@ -1075,7 +1095,7 @@ class PageAccessibilitySnapshotData(ToolData):
     meta: dict[str, Any]
 
 
-class WaitForUrlData(ToolData):
+class WaitForUrlData(TabScopedData):
     url_pattern: str
     matched: Literal[True]
     url: str
@@ -1086,7 +1106,7 @@ class WaitTimeData(ToolData):
     waited_seconds: float
 
 
-class WaitUntilData(ToolData):
+class WaitUntilData(TabScopedData):
     condition: str
     selector: str
     value: str
@@ -1097,7 +1117,7 @@ class WaitUntilData(ToolData):
     state: dict[str, Any]
 
 
-class NetworkListenStartData(ToolData):
+class NetworkListenStartData(TabScopedData):
     listening: bool
     filters: dict[str, Any]
     started_at: str
@@ -1105,7 +1125,7 @@ class NetworkListenStartData(ToolData):
     cleared: bool
 
 
-class NetworkListenWaitData(ToolData):
+class NetworkListenWaitData(TabScopedData):
     listening: bool
     timed_out: bool
     count: int
@@ -1114,13 +1134,13 @@ class NetworkListenWaitData(ToolData):
     meta: dict[str, Any]
 
 
-class NetworkListenStopData(ToolData):
+class NetworkListenStopData(TabScopedData):
     listening: bool
     was_listening: bool
     cleared: bool
 
 
-class NetworkBlockedUrlsSetData(ToolData):
+class NetworkBlockedUrlsSetData(TabScopedData):
     count: int
     urls: list[str]
     set: Literal[True]

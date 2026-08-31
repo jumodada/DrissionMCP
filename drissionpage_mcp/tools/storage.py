@@ -15,14 +15,14 @@ from ..tool_outputs import (
     StorageGetData,
     StorageSetData,
 )
-from .base import ToolInput, ToolOutcome, ToolType, define_tool
+from .base import TabScopedInput, ToolInput, ToolOutcome, ToolType, define_tool
 
 if TYPE_CHECKING:
     from ..context import DrissionPageContext
 StorageArea = Literal["local", "session"]
 
 
-class BrowserCookiesGetInput(ToolInput):
+class BrowserCookiesGetInput(TabScopedInput):
     """Input schema for reading cookies."""
 
     all_domains: bool = Field(default=False)
@@ -53,13 +53,13 @@ class BrowserCookieInput(ToolInput):
     )
 
 
-class BrowserCookiesSetInput(ToolInput):
+class BrowserCookiesSetInput(TabScopedInput):
     """Input schema for setting a bounded cookie batch."""
 
     cookies: list[BrowserCookieInput] = Field(..., min_length=1, max_length=100)
 
 
-class BrowserCookiesDeleteInput(ToolInput):
+class BrowserCookiesDeleteInput(TabScopedInput):
     """Input schema for deleting one named cookie."""
 
     name: str = Field(..., min_length=1, max_length=1024)
@@ -68,11 +68,11 @@ class BrowserCookiesDeleteInput(ToolInput):
     path: str | None = Field(default=None, max_length=2048)
 
 
-class BrowserCookiesClearInput(ToolInput):
+class BrowserCookiesClearInput(TabScopedInput):
     """Input schema for clearing all browser cookies."""
 
 
-class StorageGetInput(ToolInput):
+class StorageGetInput(TabScopedInput):
     """Input schema for reading web storage."""
 
     area: StorageArea = Field(default="local")
@@ -83,7 +83,7 @@ class StorageGetInput(ToolInput):
     )
 
 
-class StorageSetInput(ToolInput):
+class StorageSetInput(TabScopedInput):
     """Input schema for setting web storage."""
 
     area: StorageArea = Field(default="local")
@@ -91,7 +91,7 @@ class StorageSetInput(ToolInput):
     value: str = Field(..., description="String value to store. Not echoed in result.")
 
 
-class StorageClearInput(ToolInput):
+class StorageClearInput(TabScopedInput):
     """Input schema for clearing web storage."""
 
     area: StorageArea = Field(default="local")
