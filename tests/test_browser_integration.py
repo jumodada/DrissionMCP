@@ -5,16 +5,20 @@ from __future__ import annotations
 import asyncio
 import base64
 import json
+import logging
 import os
 from email import policy
 from email.parser import BytesParser
 from pathlib import Path
 from typing import Any
+from unittest.mock import AsyncMock
 from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
 from urllib.request import urlopen
 
 import pytest
 
+from drissionpage_mcp.context import DrissionPageContext
+from drissionpage_mcp.env import env_bool
 from drissionpage_mcp.server import DrissionPageMCPServer
 from drissionpage_mcp.tools.base import ToolOutcome
 from tests.fixtures.http_fixture import (
@@ -2453,8 +2457,29 @@ async def test_mcp_0_7_7_browser_owned_capabilities_are_fully_automated(
 async def _execute_tool_text(
     server: DrissionPageMCPServer, name: str, arguments: dict[str, Any]
 ) -> str:
-    content = await _execute_tool_content(server, name, arguments)
+    retry_allowed = name == "page_navigate" and _browser_start_retry_allowed(server)
+    content, payload = await _execute_tool(server, name, arguments)
+    if (
+        retry_allowed
+        and payload.get("error", {}).get("code") == "BROWSER_START_FAILED"
+        and _browser_start_retry_allowed(server)
+    ):
+        logging.getLogger(__name__).warning(
+            "Initial isolated browser launch failed (BROWSER_START_FAILED); retrying once"
+        )
+        await server.cleanup()
+        content, _payload = await _execute_tool(server, name, arguments)
     return "\n".join(item.text for item in content if item.type == "text")
+
+
+def _browser_start_retry_allowed(server: DrissionPageMCPServer) -> bool:
+    """Retry only a failed first launch of an MCP-owned auto-port browser."""
+    context = server.context
+    return (
+        (context is None or (context.browser is None and not context._is_initialized))
+        and env_bool("DP_AUTO_PORT", True)
+        and not os.environ.get("DP_USER_DATA_PATH")
+    )
 
 
 async def _execute_tool_content(
@@ -2549,6 +2574,104 @@ def test_browser_unavailable_helper_fails_when_required(
     monkeypatch.setenv("DP_MCP_REQUIRE_BROWSER", "1")
     with pytest.raises(pytest.fail.Exception):
         _skip_if_browser_unavailable("### Error\nChrome failed to initialize")
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("persistent_failure", [False, True])
+async def test_tool_text_retries_one_transient_browser_start_failure(
+    monkeypatch: pytest.MonkeyPatch, persistent_failure: bool,
+) -> None:
+    monkeypatch.setenv("DP_AUTO_PORT", "1")
+    monkeypatch.delenv("DP_USER_DATA_PATH", raising=False)
+    monkeypatch.setenv("DP_MCP_REQUIRE_BROWSER", "1")
+    server = DrissionPageMCPServer()
+    contexts: list[DrissionPageContext] = []
+    cleanup = AsyncMock(wraps=server.cleanup)
+
+    async def fake_execute_tool(*_args: Any) -> tuple[list[Any], dict[str, Any]]:
+        if server.context is None:
+            server.context = DrissionPageContext()
+        contexts.append(server.context)
+        response = ToolOutcome()
+        if len(contexts) == 1 or persistent_failure:
+            response.add_error(
+                "Browser failed to start.", "BROWSER_START_FAILED"
+            )
+        else:
+            response.add_result("Successfully navigated")
+        return list(response.content()), response.structured_content()
+
+    monkeypatch.setattr(
+        "tests.test_browser_integration._execute_tool", fake_execute_tool
+    )
+    monkeypatch.setattr(server, "cleanup", cleanup)
+
+    result = await _execute_tool_text(
+        server, "page_navigate", {"url": "http://127.0.0.1/"}
+    )
+
+    assert len(contexts) == 2
+    assert contexts[0] is not contexts[1]
+    cleanup.assert_awaited_once()
+    if persistent_failure:
+        with pytest.raises(pytest.fail.Exception):
+            _skip_if_browser_unavailable(result)
+    else:
+        assert "Successfully navigated" in result
+    await server.cleanup()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "boundary",
+    [
+        "active_before", "partial_before", "active_after", "partial_after",
+        "initialized_without_browser",
+        "shared_port", "shared_profile", "other_tool", "navigation_error", "success",
+    ],
+)
+async def test_tool_text_does_not_retry_outside_initial_isolated_startup(
+    monkeypatch: pytest.MonkeyPatch, boundary: str,
+) -> None:
+    monkeypatch.setenv("DP_AUTO_PORT", "0" if boundary == "shared_port" else "1")
+    monkeypatch.delenv("DP_USER_DATA_PATH", raising=False)
+    if boundary == "shared_profile":
+        monkeypatch.setenv("DP_USER_DATA_PATH", "/test/shared-profile")
+    server = DrissionPageMCPServer()
+    context = server.context = DrissionPageContext()
+    if boundary in {"active_before", "partial_before"}:
+        context._browser = object()
+        context._is_initialized = boundary == "active_before"
+    if boundary == "initialized_without_browser":
+        context._is_initialized = True
+    response = ToolOutcome()
+    if boundary == "success":
+        response.add_result("Successfully navigated")
+    else:
+        response.add_error(
+            "Browser operation failed.",
+            "PAGE_NAVIGATION_FAILED" if boundary == "navigation_error" else "BROWSER_START_FAILED",
+        )
+
+    async def fake_execute_tool(*_args: Any) -> tuple[list[Any], dict[str, Any]]:
+        if boundary in {"active_after", "partial_after"}:
+            context._browser = object()
+            context._is_initialized = boundary == "active_after"
+        return list(response.content()), response.structured_content()
+
+    execute = AsyncMock(side_effect=fake_execute_tool)
+    cleanup = AsyncMock(wraps=server.cleanup)
+    monkeypatch.setattr("tests.test_browser_integration._execute_tool", execute)
+    monkeypatch.setattr(server, "cleanup", cleanup)
+    name = "page_get_url" if boundary == "other_tool" else "page_navigate"
+
+    result = await _execute_tool_text(server, name, {"url": "http://127.0.0.1/"})
+
+    assert result == "\n".join(item.text for item in response.content())
+    execute.assert_awaited_once()
+    cleanup.assert_not_awaited()
+    assert server.context is context
+    await server.cleanup()
 
 
 def _skip_if_browser_unavailable(text: str) -> None:

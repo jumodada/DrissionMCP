@@ -111,18 +111,16 @@ async def wait_for_element(
     context: "DrissionPageContext", args: WaitElementInput
 ) -> "ToolOutcome":
     """Wait for an element to appear."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     found = await tab.waits.element(args.selector, timeout=args.timeout)
     if not found:
         raise TimeoutError(f"Element '{target_label(args.selector)}' not found")
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"Element '{target_label(args.selector)}' appeared within {args.timeout:g} seconds",
         **DomTarget.from_input(args.selector).metadata(),
         found=True,
         timeout=args.timeout,
     )
-    return outcome
 
 
 @define_tool(
@@ -141,19 +139,17 @@ async def wait_for_url(
     context: "DrissionPageContext", args: WaitUrlInput
 ) -> "ToolOutcome":
     """Wait for URL to match a pattern."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     matched = await tab.waits.url(args.url_pattern, timeout=args.timeout)
     if not matched:
         raise TimeoutError(f"URL did not contain '{args.url_pattern}'")
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"URL matched '{args.url_pattern}' within {args.timeout:g} seconds",
         url_pattern=args.url_pattern,
         matched=True,
         url=tab.url,
         timeout=args.timeout,
     )
-    return outcome
 
 
 @define_tool(
@@ -170,12 +166,10 @@ async def wait_time(
     context: "DrissionPageContext", args: WaitTimeInput
 ) -> "ToolOutcome":
     """Wait for a specific time."""
-    outcome = ToolOutcome()
     await context.wait(args.seconds)
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"Waited for {args.seconds} seconds", waited_seconds=args.seconds
     )
-    return outcome
 
 
 @define_tool(
@@ -194,7 +188,6 @@ async def wait_until(
     context: "DrissionPageContext", args: WaitUntilInput
 ) -> "ToolOutcome":
     """Wait until an observable condition is satisfied."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.waits.until(
         condition=args.condition,
@@ -205,7 +198,6 @@ async def wait_until(
         interval=args.interval,
         stable_ms=args.stable_ms,
     )
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"Condition '{args.condition}' matched within {args.timeout:g} seconds", **result
     )
-    return outcome

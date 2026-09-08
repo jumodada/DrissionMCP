@@ -175,11 +175,9 @@ async def find_element(
     context: "DrissionPageContext", args: FindElementInput
 ) -> "ToolOutcome":
     """Find an element on the page."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     element = await tab.elements.find(args.selector, timeout=args.timeout)
-    outcome.add_result(f"Found element: {target_label(args.selector)}", element=element)
-    return outcome
+    return ToolOutcome().add_result(f"Found element: {target_label(args.selector)}", element=element)
 
 
 @define_tool(
@@ -198,16 +196,14 @@ async def find_all_elements(
     context: "DrissionPageContext", args: FindAllElementsInput
 ) -> "ToolOutcome":
     """Find multiple elements on the page."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.elements.find_all(
         args.selector, limit=args.limit, include_html=args.include_html
     )
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"Found {result['returned']} of {result['count']} elements: {target_label(args.selector)}",
         **with_response_meta(result),
     )
-    return outcome
 
 
 @define_tool(
@@ -225,7 +221,6 @@ async def click_element(
     context: "DrissionPageContext", args: ClickElementInput
 ) -> "ToolOutcome":
     """Click on an element."""
-    outcome = ToolOutcome()
     _validate_click_capability(context, args)
     tab = context.current_tab_or_die()
     metadata = DomTarget.from_input(args.selector).metadata()
@@ -259,10 +254,9 @@ async def click_element(
     }
     if changes is not None:
         data["changes"] = changes
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"Successfully clicked element: {target_label(args.selector)}", **data
     )
-    return outcome
 
 
 def _click_capability_probe(
@@ -322,7 +316,6 @@ async def type_text(
     context: "DrissionPageContext", args: TypeTextInput
 ) -> "ToolOutcome":
     """Type text into an element."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     before = await maybe_observe(tab, args.observe)
     metadata = await tab.elements.type(
@@ -334,10 +327,9 @@ async def type_text(
     data = {**metadata, "typed": True, "cleared": args.clear}
     if changes is not None:
         data["changes"] = changes
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"Successfully typed text into element: {target_label(args.selector)}", **data
     )
-    return outcome
 
 
 @define_tool(
@@ -354,12 +346,10 @@ async def type_text(
 )
 async def get_text(context: "DrissionPageContext", args: GetTextInput) -> "ToolOutcome":
     """Get text from an element or the page."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     metadata = _target_metadata(args.selector)
     text = await tab.elements.text(args.selector)
-    outcome.add_result(text or "", text=text or "", **metadata)
-    return outcome
+    return ToolOutcome().add_result(text or "", text=text or "", **metadata)
 
 
 @define_tool(
@@ -380,16 +370,14 @@ async def get_attribute(
     context: "DrissionPageContext", args: GetAttributeInput
 ) -> "ToolOutcome":
     """Get an attribute value from an element."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     value = await tab.elements.attribute(args.selector, args.attribute)
-    outcome.add_result(
+    return ToolOutcome().add_result(
         "" if value is None else str(value),
         **DomTarget.from_input(args.selector).metadata(),
         attribute=args.attribute,
         value=value,
     )
-    return outcome
 
 
 @define_tool(
@@ -410,16 +398,14 @@ async def get_property(
     context: "DrissionPageContext", args: GetPropertyInput
 ) -> "ToolOutcome":
     """Get a live DOM property value from an element."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     value = await tab.elements.property(args.selector, args.property)
-    outcome.add_result(
+    return ToolOutcome().add_result(
         "" if value is None else str(value),
         **DomTarget.from_input(args.selector).metadata(),
         property=args.property,
         value=_json_safe(value),
     )
-    return outcome
 
 
 @define_tool(
@@ -436,12 +422,10 @@ async def get_property(
 )
 async def get_html(context: "DrissionPageContext", args: GetHtmlInput) -> "ToolOutcome":
     """Get HTML from an element or the page."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     metadata = _target_metadata(args.selector)
     html = await tab.elements.html(args.selector)
-    outcome.add_result(html or "", html=html or "", **metadata)
-    return outcome
+    return ToolOutcome().add_result(html or "", html=html or "", **metadata)
 
 
 @define_tool(
@@ -459,11 +443,9 @@ async def get_html(context: "DrissionPageContext", args: GetHtmlInput) -> "ToolO
 async def element_state_get(
     context: "DrissionPageContext", args: ElementStateInput
 ) -> "ToolOutcome":
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     state = await tab.elements.state(args.selector, timeout=args.timeout)
-    outcome.add_result(f"Inspected element: {target_label(args.selector)}", **state)
-    return outcome
+    return ToolOutcome().add_result(f"Inspected element: {target_label(args.selector)}", **state)
 
 
 def _target_metadata(target: ElementTargetArg) -> dict[str, object]:

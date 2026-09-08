@@ -46,13 +46,11 @@ async def page_console_logs(
     context: "DrissionPageContext", args: ConsoleLogsInput
 ) -> "ToolOutcome":
     """Return current-tab console logs."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.observation.console_logs(
         level=args.level, since=args.since, limit=args.limit
     )
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"Read {result['count']} console log{('' if result['count'] == 1 else 's')}",
         **result,
     )
-    return outcome

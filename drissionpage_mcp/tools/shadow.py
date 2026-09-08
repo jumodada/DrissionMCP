@@ -47,13 +47,11 @@ class ShadowFindAllInput(TabScopedInput):
 async def shadow_find(
     context: DrissionPageContext, args: ShadowFindInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.frames.shadow_find(
         host_selector=args.host_selector, selector=args.selector, timeout=args.timeout
     )
-    outcome.add_result(f"Found shadow element: {args.selector}", **result)
-    return outcome
+    return ToolOutcome().add_result(f"Found shadow element: {args.selector}", **result)
 
 
 @define_tool(
@@ -71,7 +69,6 @@ async def shadow_find(
 async def shadow_find_all(
     context: DrissionPageContext, args: ShadowFindAllInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.frames.shadow_find_all(
         host_selector=args.host_selector,
@@ -79,8 +76,7 @@ async def shadow_find_all(
         limit=args.limit,
         include_html=args.include_html,
     )
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"Found {result['returned']} of {result['count']} shadow elements",
         **with_response_meta(result),
     )
-    return outcome

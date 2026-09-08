@@ -114,13 +114,11 @@ class ElementCheckInput(TabScopedInput):
 async def page_scroll(
     context: DrissionPageContext, args: PageScrollInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.interaction.scroll_page(
         direction=args.direction, pixels=args.pixels, x=args.x, y=args.y
     )
-    outcome.add_result(f"Scrolled page {args.direction}", **result)
-    return outcome
+    return ToolOutcome().add_result(f"Scrolled page {args.direction}", **result)
 
 
 @define_tool(
@@ -137,15 +135,13 @@ async def page_scroll(
 async def element_scroll_into_view(
     context: DrissionPageContext, args: ElementScrollIntoViewInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.interaction.scroll_element_into_view(
         args.selector, center=args.center, timeout=args.timeout
     )
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"Scrolled element into view: {target_label(args.selector)}", **result
     )
-    return outcome
 
 
 @define_tool(
@@ -162,7 +158,6 @@ async def element_scroll_into_view(
 async def element_hover(
     context: DrissionPageContext, args: ElementHoverInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.interaction.hover_element(
         args.selector,
@@ -170,8 +165,7 @@ async def element_hover(
         offset_x=args.offset_x,
         offset_y=args.offset_y,
     )
-    outcome.add_result(f"Hovered element: {target_label(args.selector)}", **result)
-    return outcome
+    return ToolOutcome().add_result(f"Hovered element: {target_label(args.selector)}", **result)
 
 
 @define_tool(
@@ -189,11 +183,9 @@ async def element_hover(
 async def keyboard_press(
     context: DrissionPageContext, args: KeyboardPressInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.interaction.keyboard_press(args.keys, interval=args.interval)
-    outcome.add_result("Sent keyboard keys", **result)
-    return outcome
+    return ToolOutcome().add_result("Sent keyboard keys", **result)
 
 
 @define_tool(
@@ -210,13 +202,11 @@ async def keyboard_press(
 async def element_select(
     context: DrissionPageContext, args: ElementSelectInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.interaction.select_element(
         args.selector, value=args.value, by=args.by, timeout=args.timeout
     )
-    outcome.add_result(f"Selected option in: {target_label(args.selector)}", **result)
-    return outcome
+    return ToolOutcome().add_result(f"Selected option in: {target_label(args.selector)}", **result)
 
 
 @define_tool(
@@ -233,10 +223,8 @@ async def element_select(
 async def element_check(
     context: DrissionPageContext, args: ElementCheckInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.interaction.check_element(
         args.selector, checked=args.checked, by_js=args.by_js, timeout=args.timeout
     )
-    outcome.add_result(f"Set check state for: {target_label(args.selector)}", **result)
-    return outcome
+    return ToolOutcome().add_result(f"Set check state for: {target_label(args.selector)}", **result)

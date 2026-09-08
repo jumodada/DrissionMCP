@@ -130,7 +130,6 @@ async def network_listen_start(
     context: DrissionPageContext, args: NetworkListenStartInput
 ) -> ToolOutcome:
     """Start DrissionPage listener."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.network.start(
         targets=args.targets,
@@ -139,8 +138,7 @@ async def network_listen_start(
         resource_type=args.resource_type,
         clear=args.clear,
     )
-    outcome.add_result("Started network listener", **result)
-    return outcome
+    return ToolOutcome().add_result("Started network listener", **result)
 
 
 @define_tool(
@@ -157,7 +155,6 @@ async def network_listen_wait(
     context: DrissionPageContext, args: NetworkListenWaitInput
 ) -> ToolOutcome:
     """Wait for packets from DrissionPage listener."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.network.wait(
         timeout=args.timeout,
@@ -165,17 +162,12 @@ async def network_listen_wait(
         include_headers=args.include_headers,
         include_body=args.include_body,
         max_body_chars=args.max_body_chars,
-        **(
-            {"listener_token": args.listener_token}
-            if args.listener_token is not None
-            else {}
-        ),
+        listener_token=args.listener_token,
     )
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"Captured {result['count']} network packet{('' if result['count'] == 1 else 's')}",
         **with_response_meta(result),
     )
-    return outcome
 
 
 @define_tool(
@@ -191,18 +183,12 @@ async def network_listen_stop(
     context: DrissionPageContext, args: NetworkListenStopInput
 ) -> ToolOutcome:
     """Stop DrissionPage listener."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.network.stop(
         clear=args.clear,
-        **(
-            {"listener_token": args.listener_token}
-            if args.listener_token is not None
-            else {}
-        ),
+        listener_token=args.listener_token,
     )
-    outcome.add_result("Stopped network listener", **result)
-    return outcome
+    return ToolOutcome().add_result("Stopped network listener", **result)
 
 
 @define_tool(
@@ -221,8 +207,6 @@ async def network_listen_stop(
 async def network_blocked_urls_set(
     context: DrissionPageContext, args: NetworkBlockedUrlsSetInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.network.set_blocked_urls(args.urls)
-    outcome.add_result(f"Set {result['count']} blocked URL pattern(s)", **result)
-    return outcome
+    return ToolOutcome().add_result(f"Set {result['count']} blocked URL pattern(s)", **result)

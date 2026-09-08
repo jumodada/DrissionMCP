@@ -57,11 +57,9 @@ class FrameFindInput(TabScopedInput):
 async def frame_list(
     context: DrissionPageContext, args: FrameListInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.frames.list_frames(limit=args.limit)
-    outcome.add_result(f"Found {result['count']} frame(s)", **result)
-    return outcome
+    return ToolOutcome().add_result(f"Found {result['count']} frame(s)", **result)
 
 
 @define_tool(
@@ -77,7 +75,6 @@ async def frame_list(
 async def frame_snapshot(
     context: DrissionPageContext, args: FrameSnapshotInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.frames.snapshot(
         frame_selector=args.frame_selector,
@@ -87,8 +84,7 @@ async def frame_snapshot(
         max_text_chars=args.max_text_chars,
         timeout=args.timeout,
     )
-    outcome.add_result("Captured frame snapshot", **with_response_meta(result))
-    return outcome
+    return ToolOutcome().add_result("Captured frame snapshot", **with_response_meta(result))
 
 
 @define_tool(
@@ -106,7 +102,6 @@ async def frame_snapshot(
 async def frame_find(
     context: DrissionPageContext, args: FrameFindInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.frames.find(
         selector=args.selector,
@@ -114,5 +109,4 @@ async def frame_find(
         frame_index=args.frame_index,
         timeout=args.timeout,
     )
-    outcome.add_result(f"Found frame element: {args.selector}", **result)
-    return outcome
+    return ToolOutcome().add_result(f"Found frame element: {args.selector}", **result)

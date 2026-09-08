@@ -180,15 +180,13 @@ class BrowserUserAgentSetInput(TabScopedInput):
 )
 async def resize(context: "DrissionPageContext", args: ResizeInput) -> "ToolOutcome":
     """Resize the browser window."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     await tab.page_ops.resize(args.width, args.height)
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"Successfully resized window to {args.width}x{args.height}",
         width=args.width,
         height=args.height,
     )
-    return outcome
 
 
 @define_tool(
@@ -266,15 +264,13 @@ async def page_snapshot(
     context: "DrissionPageContext", args: PageSnapshotInput
 ) -> "ToolOutcome":
     """Get a bounded page outline for LLM page understanding."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     snapshot = await tab.observation.snapshot(
         include_html=args.include_html,
         max_elements=args.max_elements,
         max_text_chars=args.max_text_chars,
     )
-    outcome.add_result("Captured page snapshot", **with_response_meta(snapshot))
-    return outcome
+    return ToolOutcome().add_result("Captured page snapshot", **with_response_meta(snapshot))
 
 
 @define_tool(
@@ -291,7 +287,6 @@ async def page_snapshot(
 async def page_accessibility_snapshot(
     context: "DrissionPageContext", args: PageAccessibilitySnapshotInput
 ) -> "ToolOutcome":
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     snapshot = await tab.accessibility.snapshot(
         scope=args.scope,
@@ -299,10 +294,9 @@ async def page_accessibility_snapshot(
         include_ignored=args.include_ignored,
         include_values=args.include_values,
     )
-    outcome.add_result(
+    return ToolOutcome().add_result(
         "Captured accessibility snapshot", **with_response_meta(snapshot)
     )
-    return outcome
 
 
 @define_tool(
@@ -319,13 +313,11 @@ async def page_observe(
     context: "DrissionPageContext", args: PageObserveInput
 ) -> "ToolOutcome":
     """Observe the current page state."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     observation = await tab.observation.observe(
         max_texts=args.max_texts, max_text_chars=args.max_text_chars
     )
-    outcome.add_result("Observed page state", **observation)
-    return outcome
+    return ToolOutcome().add_result("Observed page state", **observation)
 
 
 @define_tool(
@@ -341,13 +333,11 @@ async def page_evaluate(
     context: "DrissionPageContext", args: PageEvaluateInput
 ) -> "ToolOutcome":
     """Evaluate JavaScript in the current page with bounded output."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.observation.evaluate(
         args.script, args=args.args, max_chars=args.max_chars
     )
-    outcome.add_result("Evaluated JavaScript", **result)
-    return outcome
+    return ToolOutcome().add_result("Evaluated JavaScript", **result)
 
 
 @define_tool(
@@ -361,12 +351,10 @@ async def page_evaluate(
 )
 async def close(context: "DrissionPageContext", args: EmptyInput) -> "ToolOutcome":
     """Close the browser."""
-    outcome = ToolOutcome()
     closed = await context.close_browser()
     if closed is False:
         raise RuntimeError("Browser close failed; local MCP state was cleared.")
-    outcome.add_result("Successfully closed browser", closed=True)
-    return outcome
+    return ToolOutcome().add_result("Successfully closed browser", closed=True)
 
 
 @define_tool(
@@ -383,11 +371,9 @@ async def get_url(
     context: "DrissionPageContext", args: TabScopedEmptyInput
 ) -> "ToolOutcome":
     """Get current URL."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     url = tab.url
-    outcome.add_result(f"Current URL: {url}", url=url)
-    return outcome
+    return ToolOutcome().add_result(f"Current URL: {url}", url=url)
 
 
 @define_tool(
@@ -406,11 +392,9 @@ async def get_url(
 async def browser_headers_set(
     context: "DrissionPageContext", args: BrowserHeadersSetInput
 ) -> "ToolOutcome":
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.page_ops.set_headers(args.headers)
-    outcome.add_result(f"Set {result['count']} browser header(s)", **result)
-    return outcome
+    return ToolOutcome().add_result(f"Set {result['count']} browser header(s)", **result)
 
 
 @define_tool(
@@ -429,11 +413,9 @@ async def browser_headers_set(
 async def browser_user_agent_set(
     context: "DrissionPageContext", args: BrowserUserAgentSetInput
 ) -> "ToolOutcome":
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.page_ops.set_user_agent(args.user_agent, args.platform)
-    outcome.add_result("Set browser user agent", **result)
-    return outcome
+    return ToolOutcome().add_result("Set browser user agent", **result)
 
 
 @define_tool(
@@ -449,8 +431,6 @@ async def browser_user_agent_set(
 async def browser_cache_clear(
     context: "DrissionPageContext", args: TabScopedEmptyInput
 ) -> "ToolOutcome":
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.page_ops.clear_cache()
-    outcome.add_result("Cleared browser cache", **result)
-    return outcome
+    return ToolOutcome().add_result("Cleared browser cache", **result)

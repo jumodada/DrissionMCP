@@ -62,80 +62,63 @@ class NetworkOperations:
         clear: bool = True,
     ) -> dict[str, Any]:
         async with self._state_lock:
-            return await self._start(
-                targets=targets,
-                is_regex=is_regex,
-                method=method,
-                resource_type=resource_type,
-                clear=clear,
-            )
+            started = monotonic()
+            listener = self._listener()
+            if clear and bool(getattr(listener, "listening", False)):
+                self._safe_stop(listener)
+            elif clear and callable(getattr(listener, "clear", None)):
+                listener.clear()
 
-    async def _start(
-        self,
-        *,
-        targets: list[str] | None,
-        is_regex: bool,
-        method: str,
-        resource_type: str,
-        clear: bool,
-    ) -> dict[str, Any]:
-        started = monotonic()
-        listener = self._listener()
-        if clear and bool(getattr(listener, "listening", False)):
-            self._safe_stop(listener)
-        elif clear and callable(getattr(listener, "clear", None)):
-            listener.clear()
+            target_arg: Any = None
+            if targets:
+                target_arg = targets[0] if len(targets) == 1 else list(targets)
 
-        target_arg: Any = None
-        if targets:
-            target_arg = targets[0] if len(targets) == 1 else list(targets)
-
-        kwargs: dict[str, Any] = {
-            "targets": target_arg,
-            "is_regex": is_regex if target_arg is not None else None,
-            "method": method or None,
-            "res_type": resource_type or None,
-        }
-        try:
-            listener.start(**kwargs)
-        except TypeError:
+            kwargs: dict[str, Any] = {
+                "targets": target_arg,
+                "is_regex": is_regex if target_arg is not None else None,
+                "method": method or None,
+                "res_type": resource_type or None,
+            }
             try:
-                listener.start(
-                    target_arg, is_regex if target_arg is not None else None
-                )
+                listener.start(**kwargs)
+            except TypeError:
+                try:
+                    listener.start(
+                        target_arg, is_regex if target_arg is not None else None
+                    )
+                except Exception:
+                    self._invalidate_listener_generation(listener)
+                    raise
             except Exception:
                 self._invalidate_listener_generation(listener)
                 raise
-        except Exception:
-            self._invalidate_listener_generation(listener)
-            raise
 
-        self._started_at = datetime.now(timezone.utc).isoformat()
-        self._listener_token = token_hex(12)
-        self._state = (
-            "listening" if bool(getattr(listener, "listening", False)) else "stopped"
-        )
-        self._consumed_count = 0
-        self._next_cursor = 0
-        self._pending_packets.clear()
-        self._filters = {
-            "targets": list(targets or []),
-            "is_regex": bool(is_regex),
-            "method": method,
-            "resource_type": resource_type,
-        }
-        return {
-            "listening": bool(getattr(listener, "listening", False)),
-            "filters": dict(self._filters),
-            "started_at": self._started_at,
-            "tab_id": self._tab.mcp_tab_id,
-            "cleared": bool(clear),
-            "listener_token": self._listener_token,
-            "state": self._state,
-            "consumed_count": self._consumed_count,
-            "next_cursor": self._next_cursor,
-            "timing": {"startup_ms": max(0, int((monotonic() - started) * 1000))},
-        }
+            self._started_at = datetime.now(timezone.utc).isoformat()
+            self._listener_token = token_hex(12)
+            self._state = (
+                "listening" if bool(getattr(listener, "listening", False)) else "stopped"
+            )
+            self._consumed_count = 0
+            self._next_cursor = 0
+            self._pending_packets.clear()
+            self._filters = {
+                "targets": list(targets or []),
+                "is_regex": bool(is_regex),
+                "method": method,
+                "resource_type": resource_type,
+            }
+            return {
+                "listening": bool(getattr(listener, "listening", False)),
+                "filters": dict(self._filters),
+                "started_at": self._started_at,
+                "tab_id": self._tab.mcp_tab_id,
+                "cleared": bool(clear),
+                "listener_token": self._listener_token,
+                "state": self._state,
+                "consumed_count": self._consumed_count,
+                "next_cursor": self._next_cursor,
+                "timing": {"startup_ms": max(0, int((monotonic() - started) * 1000))},
+            }
 
     async def wait(
         self,
@@ -148,104 +131,85 @@ class NetworkOperations:
         listener_token: str | None = None,
     ) -> dict[str, Any]:
         async with self._state_lock:
-            return await self._wait(
-                timeout=timeout,
-                limit=limit,
-                include_headers=include_headers,
-                include_body=include_body,
-                max_body_chars=max_body_chars,
-                listener_token=listener_token,
-            )
+            self._validate_listener_token(listener_token)
+            listener = self._listener()
+            if not bool(getattr(listener, "listening", False)):
+                raise NetworkUnsupportedError("Network listener is not listening.")
 
-    async def _wait(
-        self,
-        *,
-        timeout: float,
-        limit: int,
-        include_headers: bool,
-        include_body: bool,
-        max_body_chars: int,
-        listener_token: str | None,
-    ) -> dict[str, Any]:
-        self._validate_listener_token(listener_token)
-        listener = self._listener()
-        if not bool(getattr(listener, "listening", False)):
-            raise NetworkUnsupportedError("Network listener is not listening.")
-
-        started = monotonic()
-        deadline = started + timeout
-        first_timeout = timeout if timeout > 0 else _MIN_LISTENER_POLL_SECONDS
-        packets = self._take_pending_packets(limit)
-        try:
-            if not packets:
-                raw_packets = await _await_listener_call(
-                    listener.wait,
-                    count=1,
-                    timeout=first_timeout,
-                    fit_count=False,
-                    raise_err=False,
-                    on_cancel_result=self._preserve_cancelled_packets,
-                )
-                packets = _packet_list(raw_packets)
-                self._defer_packets_over_limit(packets, limit)
-                packets = packets[:limit]
-            if packets and len(packets) < limit and timeout > 0:
-                drain_deadline = min(deadline, monotonic() + _PACKET_DRAIN_SECONDS)
-                while len(packets) < limit:
-                    remaining = drain_deadline - monotonic()
-                    if remaining <= 0:
-                        break
-                    next_packet = await _await_listener_call(
+            started = monotonic()
+            deadline = started + timeout
+            first_timeout = timeout if timeout > 0 else _MIN_LISTENER_POLL_SECONDS
+            packets = self._take_pending_packets(limit)
+            try:
+                if not packets:
+                    raw_packets = await _await_listener_call(
                         listener.wait,
                         count=1,
-                        timeout=remaining,
+                        timeout=first_timeout,
                         fit_count=False,
                         raise_err=False,
                         on_cancel_result=self._preserve_cancelled_packets,
                     )
-                    drained = _packet_list(next_packet)
-                    if not drained:
-                        break
-                    available = limit - len(packets)
-                    packets.extend(drained[:available])
-                    self._pending_packets.extend(drained[available:])
-        except asyncio.CancelledError:
-            self._pending_packets[:0] = packets
-            raise
-        timed_out = not packets
+                    packets = _packet_list(raw_packets)
+                    self._defer_packets_over_limit(packets, limit)
+                    packets = packets[:limit]
+                if packets and len(packets) < limit and timeout > 0:
+                    drain_deadline = min(deadline, monotonic() + _PACKET_DRAIN_SECONDS)
+                    while len(packets) < limit:
+                        remaining = drain_deadline - monotonic()
+                        if remaining <= 0:
+                            break
+                        next_packet = await _await_listener_call(
+                            listener.wait,
+                            count=1,
+                            timeout=remaining,
+                            fit_count=False,
+                            raise_err=False,
+                            on_cancel_result=self._preserve_cancelled_packets,
+                        )
+                        drained = _packet_list(next_packet)
+                        if not drained:
+                            break
+                        available = limit - len(packets)
+                        packets.extend(drained[:available])
+                        self._pending_packets.extend(drained[available:])
+            except asyncio.CancelledError:
+                self._pending_packets[:0] = packets
+                raise
+            timed_out = not packets
 
-        normalized = [
-            _network_packet_payload(
-                packet,
-                index=self._next_cursor + index,
-                include_headers=include_headers,
-                include_body=include_body,
-                max_body_chars=max_body_chars,
+            normalized = [
+                _network_packet_payload(
+                    packet,
+                    index=self._next_cursor + index,
+                    include_headers=include_headers,
+                    include_body=include_body,
+                    max_body_chars=max_body_chars,
+                )
+                for index, packet in enumerate(packets[:limit])
+            ]
+            self._next_cursor += len(normalized)
+            self._consumed_count += len(normalized)
+            self._state = (
+                "listening" if bool(getattr(listener, "listening", False)) else "stopped"
             )
-            for index, packet in enumerate(packets[:limit])
-        ]
-        self._next_cursor += len(normalized)
-        self._consumed_count += len(normalized)
-        self._state = (
-            "listening" if bool(getattr(listener, "listening", False)) else "stopped"
-        )
-        elapsed_ms = max(0, int((monotonic() - started) * 1000))
-        remaining_timeout_ms = max(0, int((deadline - monotonic()) * 1000))
-        return {
-            "listening": bool(getattr(listener, "listening", False)),
-            "timed_out": bool(timed_out),
-            "count": len(normalized),
-            "limit": limit,
-            "packets": normalized,
-            "tab_id": self._tab.mcp_tab_id,
-            "listener_token": self._listener_token,
-            "state": self._state,
-            "consumed_count": self._consumed_count,
-            "next_cursor": self._next_cursor,
-            "timeout_ms": max(0, int(timeout * 1000)),
-            "elapsed_ms": elapsed_ms,
-            "remaining_timeout_ms": remaining_timeout_ms,
-        }
+            elapsed_ms = max(0, int((monotonic() - started) * 1000))
+            remaining_timeout_ms = max(0, int((deadline - monotonic()) * 1000))
+            return {
+                "listening": bool(getattr(listener, "listening", False)),
+                "timed_out": bool(timed_out),
+                "count": len(normalized),
+                "limit": limit,
+                "packets": normalized,
+                "tab_id": self._tab.mcp_tab_id,
+                "listener_token": self._listener_token,
+                "state": self._state,
+                "consumed_count": self._consumed_count,
+                "next_cursor": self._next_cursor,
+                "timeout_ms": max(0, int(timeout * 1000)),
+                "elapsed_ms": elapsed_ms,
+                "remaining_timeout_ms": remaining_timeout_ms,
+            }
 
     async def stop(
         self, *, clear: bool = True, listener_token: str | None = None

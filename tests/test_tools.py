@@ -295,5 +295,5 @@ def test_tool_core_has_single_typed_registry_without_legacy_surfaces() -> None:
             assert [argument.arg for argument in node.args.args] == ["context", "args"]
 
     outcome = ToolOutcome()
-    outcome.add_result("ok")
+    assert outcome.add_result("ok") is outcome
     assert outcome.structured_content() == {"ok": True, "message": "ok", "data": {}}

@@ -34,17 +34,15 @@ class TabIdInput(ToolInput):
 )
 async def tab_list(context: DrissionPageContext, args: EmptyInput) -> ToolOutcome:
     """List current browser tabs."""
-    outcome = ToolOutcome()
     await context.sync_tabs()
     summaries = context.tab_summaries()
     active_tab = next((tab for tab in summaries if tab.get("active")), None)
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"Found {len(summaries)} browser tabs",
         tabs=summaries,
         count=len(summaries),
         active_tab_id=str(active_tab.get("id", "")) if active_tab else "",
     )
-    return outcome
 
 
 @define_tool(
@@ -60,20 +58,18 @@ async def tab_list(context: DrissionPageContext, args: EmptyInput) -> ToolOutcom
 )
 async def tab_switch(context: DrissionPageContext, args: TabIdInput) -> ToolOutcome:
     """Switch active browser tab."""
-    outcome = ToolOutcome()
     tab = await context.switch_tab(args.tab_id)
     summaries = context.tab_summaries()
     active = next(
         (item for item in summaries if item.get("id") == tab.mcp_tab_id),
         tab.summary(active=True),
     )
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"Switched to tab: {tab.mcp_tab_id}",
         tab=active,
         tab_id=tab.mcp_tab_id,
         url=tab.url,
     )
-    return outcome
 
 
 @define_tool(
@@ -89,15 +85,13 @@ async def tab_switch(context: DrissionPageContext, args: TabIdInput) -> ToolOutc
 )
 async def tab_close(context: DrissionPageContext, args: TabIdInput) -> ToolOutcome:
     """Close a browser tab."""
-    outcome = ToolOutcome()
     await context.close_tab_by_id(args.tab_id)
     summaries = context.tab_summaries()
     active_tab = next((tab for tab in summaries if tab.get("active")), None)
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"Closed tab: {args.tab_id}",
         closed=True,
         tab_id=args.tab_id,
         remaining_count=len(summaries),
         active_tab_id=str(active_tab.get("id", "")) if active_tab else "",
     )
-    return outcome

@@ -206,14 +206,13 @@ async def pointer_move(
     context: DrissionPageContext, args: PointerCoordinatesInput
 ) -> ToolOutcome:
     """Move the pointer to viewport coordinates without pressing a button."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.pointer.move_to(
         args.x,
         args.y,
         profile=args.profile,
     )
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"Successfully moved pointer to coordinates ({args.x:g}, {args.y:g})",
         x=args.x,
         y=args.y,
@@ -221,7 +220,6 @@ async def pointer_move(
         url=tab.url,
         motion=result.to_dict(),
     )
-    return outcome
 
 
 @define_tool(
@@ -244,7 +242,6 @@ async def pointer_drag(
     context: DrissionPageContext, args: PointerDragInput
 ) -> ToolOutcome:
     """Drag between viewport coordinates without exposing persistent button state."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.pointer.drag_to(
         args.start_x,
@@ -255,7 +252,7 @@ async def pointer_drag(
         button=args.button,
         waypoints=tuple(Point(point.x, point.y) for point in args.waypoints),
     )
-    outcome.add_result(
+    return ToolOutcome().add_result(
         "Successfully completed pointer drag",
         start_x=args.start_x,
         start_y=args.start_y,
@@ -265,7 +262,6 @@ async def pointer_drag(
         url=tab.url,
         motion=result.to_dict(),
     )
-    return outcome
 
 
 @define_tool(
@@ -286,7 +282,6 @@ async def pointer_drag_element(
     context: DrissionPageContext, args: PointerDragElementInput
 ) -> ToolOutcome:
     """Resolve selector geometry atomically and execute one held-button drag."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     source_input = (
         args.source.target if isinstance(args.source, ElementSourceInput) else args.source
@@ -350,14 +345,13 @@ async def pointer_drag_element(
         button=args.button,
         axis=drag_axis,
     )
-    outcome.add_result(
+    return ToolOutcome().add_result(
         "Successfully resolved and dragged element",
         source=source.to_dict(),
         destination=destination_data,
         url=tab.url,
         motion=motion.to_dict(),
     )
-    return outcome
 
 
 @define_tool(
@@ -379,7 +373,6 @@ async def click_coordinates(
     context: DrissionPageContext, args: ClickCoordinatesInput
 ) -> ToolOutcome:
     """Click at coordinates."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.pointer.click_at(
         args.x,
@@ -388,7 +381,7 @@ async def click_coordinates(
         button=args.button,
         delay_before_press_ms=args.delay_before_press_ms,
     )
-    outcome.add_result(
+    return ToolOutcome().add_result(
         f"Successfully clicked at coordinates ({args.x:g}, {args.y:g})",
         x=args.x,
         y=args.y,
@@ -396,4 +389,3 @@ async def click_coordinates(
         url=tab.url,
         motion=result.to_dict(),
     )
-    return outcome

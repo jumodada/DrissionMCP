@@ -185,10 +185,11 @@ class ToolOutcome:
         self._error = ToolError(code=code_value, message=safe_error, details=safe_details)
         self._content.append(TextContent(type="text", text=f"### Error\n{safe_error}"))
 
-    def add_result(self, message: str, **data: Any) -> None:
+    def add_result(self, message: str, **data: Any) -> ToolOutcome:
         safe_message = _sanitize_string(message)
         self.set_result(safe_message, data)
         self._content.append(TextContent(type="text", text=f"### Result\n{safe_message}"))
+        return self
 
     def set_result(self, message: str, data: dict[str, Any]) -> None:
         """Set structured success data without adding a presentation block."""

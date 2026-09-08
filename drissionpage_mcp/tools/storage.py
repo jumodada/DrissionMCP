@@ -111,15 +111,13 @@ class StorageClearInput(TabScopedInput):
 async def browser_cookies_get(
     context: DrissionPageContext, args: BrowserCookiesGetInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.storage.cookies_get(
         all_domains=args.all_domains,
         all_info=args.all_info,
         include_values=args.include_values,
     )
-    outcome.add_result(f"Read {result['count']} cookie(s)", **result)
-    return outcome
+    return ToolOutcome().add_result(f"Read {result['count']} cookie(s)", **result)
 
 
 @define_tool(
@@ -138,12 +136,10 @@ async def browser_cookies_get(
 async def browser_cookies_set(
     context: DrissionPageContext, args: BrowserCookiesSetInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     cookies = [cookie.model_dump(exclude_none=True) for cookie in args.cookies]
     result = await tab.storage.cookies_set(cookies=cookies)
-    outcome.add_result(f"Set {result['count']} cookie(s)", **result)
-    return outcome
+    return ToolOutcome().add_result(f"Set {result['count']} cookie(s)", **result)
 
 
 @define_tool(
@@ -161,7 +157,6 @@ async def browser_cookies_set(
 async def browser_cookies_delete(
     context: DrissionPageContext, args: BrowserCookiesDeleteInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.storage.cookies_delete(
         name=args.name,
@@ -169,8 +164,7 @@ async def browser_cookies_delete(
         domain=args.domain,
         path=args.path,
     )
-    outcome.add_result(f"Deleted browser cookie: {args.name}", **result)
-    return outcome
+    return ToolOutcome().add_result(f"Deleted browser cookie: {args.name}", **result)
 
 
 @define_tool(
@@ -186,11 +180,9 @@ async def browser_cookies_delete(
 async def browser_cookies_clear(
     context: DrissionPageContext, args: BrowserCookiesClearInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.storage.cookies_clear()
-    outcome.add_result("Cleared browser cookies", **result)
-    return outcome
+    return ToolOutcome().add_result("Cleared browser cookies", **result)
 
 
 @define_tool(
@@ -209,13 +201,11 @@ async def browser_cookies_clear(
 async def storage_get(
     context: DrissionPageContext, args: StorageGetInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.storage.get(
         area=args.area, key=args.key, include_values=args.include_values
     )
-    outcome.add_result(f"Read {args.area} storage", **result)
-    return outcome
+    return ToolOutcome().add_result(f"Read {args.area} storage", **result)
 
 
 @define_tool(
@@ -230,11 +220,9 @@ async def storage_get(
 async def storage_set(
     context: DrissionPageContext, args: StorageSetInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.storage.set(area=args.area, key=args.key, value=args.value)
-    outcome.add_result(f"Set {args.area} storage key: {args.key}", **result)
-    return outcome
+    return ToolOutcome().add_result(f"Set {args.area} storage key: {args.key}", **result)
 
 
 @define_tool(
@@ -249,8 +237,6 @@ async def storage_set(
 async def storage_clear(
     context: DrissionPageContext, args: StorageClearInput
 ) -> ToolOutcome:
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     result = await tab.storage.clear(area=args.area, key=args.key)
-    outcome.add_result(f"Cleared {args.area} storage", **result)
-    return outcome
+    return ToolOutcome().add_result(f"Cleared {args.area} storage", **result)

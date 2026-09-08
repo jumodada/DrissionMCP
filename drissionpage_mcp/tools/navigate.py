@@ -157,11 +157,9 @@ async def go_back(
     context: "DrissionPageContext", args: TabScopedEmptyInput
 ) -> "ToolOutcome":
     """Go back to the previous page."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     await tab.navigation.back()
-    outcome.add_result("Successfully went back to previous page", url=tab.url)
-    return outcome
+    return ToolOutcome().add_result("Successfully went back to previous page", url=tab.url)
 
 
 @define_tool(
@@ -177,11 +175,9 @@ async def go_forward(
     context: "DrissionPageContext", args: TabScopedEmptyInput
 ) -> "ToolOutcome":
     """Go forward to the next page."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     await tab.navigation.forward()
-    outcome.add_result("Successfully went forward to next page", url=tab.url)
-    return outcome
+    return ToolOutcome().add_result("Successfully went forward to next page", url=tab.url)
 
 
 @define_tool(
@@ -197,11 +193,9 @@ async def refresh(
     context: "DrissionPageContext", args: TabScopedEmptyInput
 ) -> "ToolOutcome":
     """Refresh the current page."""
-    outcome = ToolOutcome()
     tab = context.current_tab_or_die()
     await tab.navigation.refresh()
-    outcome.add_result("Successfully refreshed page", url=tab.url)
-    return outcome
+    return ToolOutcome().add_result("Successfully refreshed page", url=tab.url)
 
 
 def _safe_tab_id(tab) -> str:
