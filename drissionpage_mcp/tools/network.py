@@ -58,6 +58,16 @@ class NetworkListenStartInput(TabScopedInput):
 class NetworkListenWaitInput(TabScopedInput):
     """Input schema for waiting on observed packets."""
 
+    listener_token: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=128,
+        description=(
+            "Optional token returned by network_listen_start. When supplied, "
+            "stale listeners are rejected instead of silently reading another listener."
+        ),
+    )
+
     timeout: float = Field(
         default=5.0,
         ge=0,
@@ -84,6 +94,13 @@ class NetworkListenWaitInput(TabScopedInput):
 
 class NetworkListenStopInput(TabScopedInput):
     """Input schema for stopping packet observation."""
+
+    listener_token: str | None = Field(
+        default=None,
+        min_length=1,
+        max_length=128,
+        description="Optional token returned by network_listen_start.",
+    )
 
     clear: bool = Field(
         default=True, description="Clear the listener queue while stopping."
@@ -148,6 +165,11 @@ async def network_listen_wait(
         include_headers=args.include_headers,
         include_body=args.include_body,
         max_body_chars=args.max_body_chars,
+        **(
+            {"listener_token": args.listener_token}
+            if args.listener_token is not None
+            else {}
+        ),
     )
     outcome.add_result(
         f"Captured {result['count']} network packet{('' if result['count'] == 1 else 's')}",
@@ -171,7 +193,14 @@ async def network_listen_stop(
     """Stop DrissionPage listener."""
     outcome = ToolOutcome()
     tab = context.current_tab_or_die()
-    result = await tab.network.stop(clear=args.clear)
+    result = await tab.network.stop(
+        clear=args.clear,
+        **(
+            {"listener_token": args.listener_token}
+            if args.listener_token is not None
+            else {}
+        ),
+    )
     outcome.add_result("Stopped network listener", **result)
     return outcome
 

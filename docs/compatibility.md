@@ -18,7 +18,7 @@ DrissionPage MCP follows a conservative compatibility policy for Python, Drissio
   cleanup release that removes the two 0.3.x alias names listed below; future
   removals must be documented in release notes and migration guidance.
 - DrissionPage 5.x beta/internal builds are not supported by DrissionPage MCP
-  0.8.7. Keep MCP installs pinned to `DrissionPage>=4.1.1.4,<5` until a
+  0.8.8. Keep MCP installs pinned to `DrissionPage>=4.1.1.4,<5` until a
   separate compatibility plan is implemented.
 - Input schema changes should be backward compatible when possible. The 0.4.1 `element_get_property` `property_name` -> `property` cleanup is a documented beta-stage breaking schema correction for LLM usability.
 - Unknown input fields are rejected rather than silently ignored. Update saved
@@ -84,6 +84,28 @@ successful output `data` now requires the resolved MCP tab id.
 Existing external Skills remain compatible because `tab_id` is optional. A
 multi-tab Skill should nevertheless pass the returned MCP `tab_id` to later
 tab-scoped calls so its target does not depend on shared current-tab state.
+
+## 0.8.7 to 0.8.8 Migration
+
+0.8.8 keeps all 69 tool names, zero prompts, one Skills catalog resource, and
+the `DrissionPage>=4.1.1.4,<5` dependency range. Existing listener calls remain
+valid because `listener_token` is optional, while token-aware clients gain
+generation-safe coordination.
+
+- `network_listen_start` now returns a non-secret `listener_token`, explicit
+  lifecycle `state`, cumulative `consumed_count`, `next_cursor`, and
+  `timing.startup_ms`.
+- Pass that token to `network_listen_wait` and `network_listen_stop`. A token
+  from a replaced or closed listener fails with `LISTENER_NOT_FOUND` instead of
+  reading or stopping the current listener generation.
+- Wait results expose monotonic packet indices, `timed_out`, `timeout_ms`,
+  `elapsed_ms`, and `remaining_timeout_ms`. A timed-out wait remains a successful
+  observation with zero packets.
+- If cancellation arrives after DrissionPage has removed a packet from its
+  queue, the owner retains it for the next wait. Starting a replacement listener
+  or clearing/stopping the current listener discards that pending generation.
+- Listener state remains isolated per tab. Tab close waits for in-flight calls,
+  then stops and clears the tab-owned listener before native teardown.
 
 ## 0.8.3 to 0.8.4 Migration
 

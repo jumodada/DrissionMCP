@@ -2140,6 +2140,11 @@ async def test_mcp_0_5_6_network_listener_captures_fetch_xhr() -> None:
                     pytest.skip(start_payload["message"])
                 pytest.fail(start_payload["message"])
             assert start_payload["data"]["listening"] is True
+            listener_token = start_payload["data"]["listener_token"]
+            assert start_payload["data"]["state"] == "listening"
+            assert start_payload["data"]["consumed_count"] == 0
+            assert start_payload["data"]["next_cursor"] == 0
+            assert start_payload["data"]["timing"]["startup_ms"] >= 0
             _content, click_payload = await _execute_tool(
                 server, "element_click", {"selector": "#network-action", "timeout": 2}
             )
@@ -2154,6 +2159,7 @@ async def test_mcp_0_5_6_network_listener_captures_fetch_xhr() -> None:
                     "include_headers": True,
                     "include_body": True,
                     "max_body_chars": 500,
+                    "listener_token": listener_token,
                 },
             )
             assert asyncio.get_running_loop().time() - started < 2.0
@@ -2162,11 +2168,151 @@ async def test_mcp_0_5_6_network_listener_captures_fetch_xhr() -> None:
             assert any("/api/data.json" in url for url in urls)
             assert any("/api/echo.json" in url for url in urls)
             assert "fixture-secret" not in json.dumps(wait_payload["data"])
+            assert wait_payload["data"]["listener_token"] == listener_token
+            assert wait_payload["data"]["state"] == "listening"
+            assert wait_payload["data"]["consumed_count"] == 2
+            assert wait_payload["data"]["next_cursor"] == 2
+            assert wait_payload["data"]["remaining_timeout_ms"] >= 0
             _content, stop_payload = await _execute_tool(
-                server, "network_listen_stop", {"clear": True}
+                server,
+                "network_listen_stop",
+                {"clear": True, "listener_token": listener_token},
             )
             assert stop_payload["ok"] is True
             assert stop_payload["data"]["listening"] is False
+            assert stop_payload["data"]["state"] == "stopped"
+            assert stop_payload["data"]["listener_token"] == listener_token
+
+            for _ in range(100):
+                _content, cycle_start = await _execute_tool(
+                    server, "network_listen_start", {"clear": True}
+                )
+                assert cycle_start["ok"] is True
+                _content, cycle_stop = await _execute_tool(
+                    server,
+                    "network_listen_stop",
+                    {
+                        "clear": True,
+                        "listener_token": cycle_start["data"]["listener_token"],
+                    },
+                )
+                assert cycle_stop["ok"] is True
+
+            listener = server.context.current_tab_or_die().page.listen
+            assert listener.listening is False
+            assert listener._driver is None
+            assert listener._caught.empty()
+            assert listener._request_ids == {}
+            assert listener._extra_info_ids == {}
+    finally:
+        await server.cleanup()
+
+
+@pytest.mark.asyncio
+async def test_mcp_0_8_8_network_listeners_are_isolated_per_tab() -> None:
+    """keeps packet queues and listener generations bound to their owning tab."""
+
+    server = DrissionPageMCPServer()
+    try:
+        with local_http_fixture() as base_url:
+            navigate = await _execute_tool_text(
+                server, "page_navigate", {"url": base_url + "/network"}
+            )
+            _skip_if_browser_unavailable(navigate)
+            _content, tabs = await _execute_scoped_tool(server, "tab_list", {})
+            first_tab_id = tabs["data"]["active_tab_id"]
+            _content, created = await _execute_scoped_tool(
+                server,
+                "page_navigate",
+                {
+                    "url": base_url + "/network",
+                    "new_tab": True,
+                    "background": True,
+                },
+            )
+            second_tab_id = created["data"]["tab_id"]
+
+            listeners: dict[str, str] = {}
+            for tab_id in (first_tab_id, second_tab_id):
+                _content, started = await _execute_scoped_tool(
+                    server,
+                    "network_listen_start",
+                    {
+                        "tab_id": tab_id,
+                        "targets": ["/api/data.json"],
+                        "clear": True,
+                    },
+                )
+                assert started["ok"] is True
+                assert started["data"]["tab_id"] == tab_id
+                listeners[tab_id] = started["data"]["listener_token"]
+
+            _content, first_click = await _execute_scoped_tool(
+                server,
+                "element_click",
+                {
+                    "tab_id": first_tab_id,
+                    "selector": "#network-action",
+                    "timeout": 2,
+                },
+            )
+            assert first_click["ok"] is True
+            _content, first_packets = await _execute_scoped_tool(
+                server,
+                "network_listen_wait",
+                {
+                    "tab_id": first_tab_id,
+                    "listener_token": listeners[first_tab_id],
+                    "timeout": 2,
+                    "limit": 1,
+                },
+            )
+            assert first_packets["data"]["count"] == 1
+            assert first_packets["data"]["tab_id"] == first_tab_id
+
+            _content, second_timeout = await _execute_scoped_tool(
+                server,
+                "network_listen_wait",
+                {
+                    "tab_id": second_tab_id,
+                    "listener_token": listeners[second_tab_id],
+                    "timeout": 0.2,
+                    "limit": 1,
+                },
+            )
+            assert second_timeout["data"]["timed_out"] is True
+            assert second_timeout["data"]["count"] == 0
+
+            _content, second_click = await _execute_scoped_tool(
+                server,
+                "element_click",
+                {
+                    "tab_id": second_tab_id,
+                    "selector": "#network-action",
+                    "timeout": 2,
+                },
+            )
+            assert second_click["ok"] is True
+            _content, second_packets = await _execute_scoped_tool(
+                server,
+                "network_listen_wait",
+                {
+                    "tab_id": second_tab_id,
+                    "listener_token": listeners[second_tab_id],
+                    "timeout": 2,
+                    "limit": 1,
+                },
+            )
+            assert second_packets["data"]["count"] == 1
+            assert second_packets["data"]["tab_id"] == second_tab_id
+
+            for tab_id, token in listeners.items():
+                _content, stopped = await _execute_scoped_tool(
+                    server,
+                    "network_listen_stop",
+                    {"tab_id": tab_id, "listener_token": token, "clear": True},
+                )
+                assert stopped["ok"] is True
     finally:
         await server.cleanup()
 
@@ -2330,6 +2476,15 @@ async def _execute_tool(
     validated = tool.input_schema.model_validate(arguments)
     response = await tool.execute(server.context, validated)
     return (list(response.content()), response.structured_content())
+
+
+async def _execute_scoped_tool(
+    server: DrissionPageMCPServer, name: str, arguments: dict[str, Any]
+) -> tuple[list[Any], dict[str, Any]]:
+    """Execute through server scheduling so explicit tab targeting is honored."""
+
+    result = await server._call_tool_impl(name, arguments)
+    return list(result.content), dict(result.structuredContent or {})
 
 
 def _shared_test_site_url_or_skip() -> str:

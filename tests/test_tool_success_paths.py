@@ -390,6 +390,11 @@ class FakeTab:
             "started_at": "2026-07-07T00:00:00+00:00",
             "tab_id": self.mcp_tab_id,
             "cleared": clear,
+            "listener_token": "listener-1",
+            "state": "listening",
+            "consumed_count": 0,
+            "next_cursor": 0,
+            "timing": {"startup_ms": 1},
         }
 
     async def network_listen_wait(
@@ -400,6 +405,7 @@ class FakeTab:
         include_headers: bool = False,
         include_body: bool = False,
         max_body_chars: int = 2000,
+        listener_token: str | None = None,
     ) -> dict[str, Any]:
         self._record(
             "network_listen_wait",
@@ -408,6 +414,7 @@ class FakeTab:
             include_headers=include_headers,
             include_body=include_body,
             max_body_chars=max_body_chars,
+            listener_token=listener_token,
         )
         packet = {
             "index": 0,
@@ -439,11 +446,32 @@ class FakeTab:
             "count": 1,
             "limit": limit,
             "packets": [packet],
+            "tab_id": self.mcp_tab_id,
+            "listener_token": listener_token,
+            "state": "listening",
+            "consumed_count": 1,
+            "next_cursor": 1,
+            "timeout_ms": int(timeout * 1000),
+            "elapsed_ms": 1,
+            "remaining_timeout_ms": max(0, int(timeout * 1000) - 1),
         }
 
-    async def network_listen_stop(self, *, clear: bool = True) -> dict[str, Any]:
-        self._record("network_listen_stop", clear=clear)
-        return {"listening": False, "was_listening": True, "cleared": clear}
+    async def network_listen_stop(
+        self, *, clear: bool = True, listener_token: str | None = None
+    ) -> dict[str, Any]:
+        self._record(
+            "network_listen_stop", clear=clear, listener_token=listener_token
+        )
+        return {
+            "listening": False,
+            "was_listening": True,
+            "cleared": clear,
+            "tab_id": self.mcp_tab_id,
+            "listener_token": listener_token,
+            "state": "stopped",
+            "consumed_count": 1,
+            "next_cursor": 1,
+        }
 
     async def click(self, x: float, y: float, **kwargs: Any):
         self._record("click", x, y, **kwargs)
@@ -1271,6 +1299,7 @@ async def test_network_tools_success_paths() -> None:
         network.network_listen_wait,
         ctx,
         network.NetworkListenWaitInput(
+            listener_token="listener-1",
             timeout=1,
             limit=5,
             include_headers=True,
@@ -1285,12 +1314,19 @@ async def test_network_tools_success_paths() -> None:
     assert packet["body_excerpt"] == '{"ok":true}'
     assert wait_payload["data"]["meta"]["json_chars"] > 0
     stop_response = await _execute(
-        network.network_listen_stop, ctx, network.NetworkListenStopInput(clear=True)
+        network.network_listen_stop,
+        ctx,
+        network.NetworkListenStopInput(clear=True, listener_token="listener-1"),
     )
     assert stop_response.structured_content()["data"] == {
         "listening": False,
         "was_listening": True,
         "cleared": True,
+        "tab_id": "t0",
+        "listener_token": "listener-1",
+        "state": "stopped",
+        "consumed_count": 1,
+        "next_cursor": 1,
     }
     blocked_response = await _execute(
         network.network_blocked_urls_set,

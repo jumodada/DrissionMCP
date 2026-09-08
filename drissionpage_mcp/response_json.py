@@ -67,7 +67,7 @@ _URL_FIELDS = {
 _HEADER_FIELDS = {"headers"}
 _COOKIE_FIELDS = {"cookies", "cookie"}
 _STORAGE_VALUE_FIELDS = {"items", "values"}
-_SAFE_METADATA_FIELDS = {"credential_scope"}
+_SAFE_METADATA_FIELDS = {"credential_scope", "listener_token"}
 _SENSITIVE_EXACT_KEYS = {
     "access_token",
     "api_key",
@@ -90,6 +90,7 @@ _PUBLIC_STATE_VALUES = {
     "granted",
     "idle",
     "inactive",
+    "listening",
     "loaded",
     "loading",
     "pending",
@@ -98,6 +99,7 @@ _PUBLIC_STATE_VALUES = {
     "skipped",
     "started",
     "stopped",
+    "closed",
     "unsupported",
 }
 _CAMEL_BOUNDARY_RE = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")

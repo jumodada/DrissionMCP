@@ -19061,17 +19061,41 @@
                   "title": "Cleared",
                   "type": "boolean"
                 },
+                "consumed_count": {
+                  "minimum": 0,
+                  "title": "Consumed Count",
+                  "type": "integer"
+                },
                 "filters": {
                   "additionalProperties": true,
                   "title": "Filters",
                   "type": "object"
                 },
+                "listener_token": {
+                  "title": "Listener Token",
+                  "type": "string"
+                },
                 "listening": {
                   "title": "Listening",
                   "type": "boolean"
                 },
+                "next_cursor": {
+                  "minimum": 0,
+                  "title": "Next Cursor",
+                  "type": "integer"
+                },
                 "started_at": {
                   "title": "Started At",
+                  "type": "string"
+                },
+                "state": {
+                  "enum": [
+                    "idle",
+                    "listening",
+                    "stopped",
+                    "closed"
+                  ],
+                  "title": "State",
                   "type": "string"
                 },
                 "tab_id": {
@@ -19079,14 +19103,26 @@
                   "maxLength": 128,
                   "minLength": 1,
                   "type": "string"
+                },
+                "timing": {
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "title": "Timing",
+                  "type": "object"
                 }
               },
               "required": [
-                "tab_id",
                 "listening",
                 "filters",
                 "started_at",
-                "cleared"
+                "cleared",
+                "listener_token",
+                "state",
+                "consumed_count",
+                "next_cursor",
+                "timing",
+                "tab_id"
               ],
               "title": "NetworkListenStartData",
               "type": "object"
@@ -19184,6 +19220,21 @@
           "title": "Limit",
           "type": "integer"
         },
+        "listener_token": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional token returned by network_listen_start. When supplied, stale listeners are rejected instead of silently reading another listener.",
+          "title": "Listener Token"
+        },
         "max_body_chars": {
           "default": 2000,
           "description": "Maximum characters for each body excerpt when include_body is true.",
@@ -19228,13 +19279,34 @@
             "data": {
               "additionalProperties": false,
               "properties": {
+                "consumed_count": {
+                  "minimum": 0,
+                  "title": "Consumed Count",
+                  "type": "integer"
+                },
                 "count": {
                   "title": "Count",
+                  "type": "integer"
+                },
+                "elapsed_ms": {
+                  "minimum": 0,
+                  "title": "Elapsed Ms",
                   "type": "integer"
                 },
                 "limit": {
                   "title": "Limit",
                   "type": "integer"
+                },
+                "listener_token": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Listener Token"
                 },
                 "listening": {
                   "title": "Listening",
@@ -19245,6 +19317,11 @@
                   "title": "Meta",
                   "type": "object"
                 },
+                "next_cursor": {
+                  "minimum": 0,
+                  "title": "Next Cursor",
+                  "type": "integer"
+                },
                 "packets": {
                   "items": {
                     "additionalProperties": true,
@@ -19252,6 +19329,21 @@
                   },
                   "title": "Packets",
                   "type": "array"
+                },
+                "remaining_timeout_ms": {
+                  "minimum": 0,
+                  "title": "Remaining Timeout Ms",
+                  "type": "integer"
+                },
+                "state": {
+                  "enum": [
+                    "idle",
+                    "listening",
+                    "stopped",
+                    "closed"
+                  ],
+                  "title": "State",
+                  "type": "string"
                 },
                 "tab_id": {
                   "description": "MCP tab id captured for this operation.",
@@ -19262,6 +19354,11 @@
                 "timed_out": {
                   "title": "Timed Out",
                   "type": "boolean"
+                },
+                "timeout_ms": {
+                  "minimum": 0,
+                  "title": "Timeout Ms",
+                  "type": "integer"
                 }
               },
               "required": [
@@ -19271,6 +19368,13 @@
                 "limit",
                 "packets",
                 "meta",
+                "listener_token",
+                "state",
+                "consumed_count",
+                "next_cursor",
+                "timeout_ms",
+                "elapsed_ms",
+                "remaining_timeout_ms",
                 "tab_id"
               ],
               "title": "NetworkListenWaitData",
@@ -19355,6 +19459,21 @@
           "title": "Clear",
           "type": "boolean"
         },
+        "listener_token": {
+          "anyOf": [
+            {
+              "maxLength": 128,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "description": "Optional token returned by network_listen_start.",
+          "title": "Listener Token"
+        },
         "tab_id": {
           "anyOf": [
             {
@@ -19387,9 +19506,40 @@
                   "title": "Cleared",
                   "type": "boolean"
                 },
+                "consumed_count": {
+                  "minimum": 0,
+                  "title": "Consumed Count",
+                  "type": "integer"
+                },
+                "listener_token": {
+                  "anyOf": [
+                    {
+                      "type": "string"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Listener Token"
+                },
                 "listening": {
                   "title": "Listening",
                   "type": "boolean"
+                },
+                "next_cursor": {
+                  "minimum": 0,
+                  "title": "Next Cursor",
+                  "type": "integer"
+                },
+                "state": {
+                  "enum": [
+                    "idle",
+                    "listening",
+                    "stopped",
+                    "closed"
+                  ],
+                  "title": "State",
+                  "type": "string"
                 },
                 "tab_id": {
                   "description": "MCP tab id captured for this operation.",
@@ -19406,6 +19556,10 @@
                 "listening",
                 "was_listening",
                 "cleared",
+                "listener_token",
+                "state",
+                "consumed_count",
+                "next_cursor",
                 "tab_id"
               ],
               "title": "NetworkListenStopData",

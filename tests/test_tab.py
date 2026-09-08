@@ -10,6 +10,7 @@ from types import SimpleNamespace
 
 import pytest
 
+from drissionpage_mcp.browser.network import NetworkListenerNotFoundError
 from drissionpage_mcp.tab import PageTab
 from drissionpage_mcp.target import SelectorTargetInput
 
@@ -2259,6 +2260,99 @@ async def test_network_start_records_filters_and_cleans_existing_listener() -> N
     }
     assert result["tab_id"] == "mcp-tab"
     assert result["cleared"] is True
+    assert isinstance(result["listener_token"], str)
+    assert result["state"] == "listening"
+    assert result["consumed_count"] == 0
+    assert result["next_cursor"] == 0
+
+
+@pytest.mark.asyncio
+async def test_network_listener_token_tracks_consumption_and_rejects_stale_tokens() -> None:
+    listener = FakeNetworkListener(
+        wait_results=[FakePacket(), FakePacket()]
+    )
+    network = PageTab(FakeNetworkPage(listener), FakeContext()).network
+
+    first = await network.start()
+    first_token = first["listener_token"]
+    consumed = await network.wait(listener_token=first_token, limit=1)
+    assert consumed["consumed_count"] == 1
+    assert consumed["next_cursor"] == 1
+    assert consumed["packets"][0]["index"] == 0
+    assert consumed["remaining_timeout_ms"] >= 0
+
+    second = await network.wait(listener_token=first_token, limit=1)
+    assert second["consumed_count"] == 2
+    assert second["next_cursor"] == 2
+    assert second["packets"][0]["index"] == 1
+
+    replacement = await network.start()
+    assert replacement["listener_token"] != first_token
+    with pytest.raises(NetworkListenerNotFoundError):
+        await network.wait(listener_token=first_token)
+    with pytest.raises(NetworkListenerNotFoundError):
+        await network.stop(listener_token=first_token)
+    assert listener.listening is True
+
+
+@pytest.mark.asyncio
+async def test_cancelled_network_wait_preserves_packet_for_the_next_wait() -> None:
+    started = threading.Event()
+    release = threading.Event()
+    packet = FakePacket()
+
+    class BlockingPacketListener(FakeNetworkListener):
+        def wait(self, **kwargs):
+            self.wait_calls.append(kwargs)
+            started.set()
+            release.wait(1)
+            return packet
+
+    listener = BlockingPacketListener()
+    network = PageTab(FakeNetworkPage(listener), FakeContext()).network
+    token = (await network.start())["listener_token"]
+
+    wait_task = asyncio.create_task(network.wait(listener_token=token, timeout=1))
+    assert await asyncio.to_thread(started.wait, 0.2)
+    wait_task.cancel()
+    release.set()
+    with pytest.raises(asyncio.CancelledError):
+        await wait_task
+
+    resumed = await network.wait(listener_token=token, timeout=0, limit=1)
+    assert resumed["packets"][0]["index"] == 0
+    assert resumed["consumed_count"] == 1
+    assert len(listener.wait_calls) == 1
+
+
+@pytest.mark.asyncio
+async def test_tab_close_stops_managed_network_listener() -> None:
+    listener = FakeNetworkListener()
+    tab = PageTab(FakeNetworkPage(listener), FakeContext())
+    await tab.network.start()
+
+    assert await tab.close() is True
+    assert listener.stop_calls == 1
+    assert tab.is_closed is True
+
+
+@pytest.mark.asyncio
+async def test_network_listener_repeats_one_hundred_clean_lifecycles() -> None:
+    listener = FakeNetworkListener()
+    network = PageTab(FakeNetworkPage(listener), FakeContext()).network
+    tokens: set[str] = set()
+
+    for _ in range(100):
+        started = await network.start(clear=True)
+        token = started["listener_token"]
+        tokens.add(token)
+        stopped = await network.stop(clear=True, listener_token=token)
+        assert stopped["state"] == "stopped"
+        assert stopped["listening"] is False
+
+    assert len(tokens) == 100
+    assert listener.stop_calls == 100
+    assert listener.listening is False
 
 
 @pytest.mark.asyncio
@@ -2389,12 +2483,30 @@ async def test_network_stop_clears_or_pauses_listener_state() -> None:
         clear=False
     )
     assert listening.pause_calls == [{"clear": False}]
-    assert paused == {"listening": False, "was_listening": True, "cleared": False}
+    assert paused == {
+        "listening": False,
+        "was_listening": True,
+        "cleared": False,
+        "tab_id": "",
+        "listener_token": None,
+        "state": "stopped",
+        "consumed_count": 0,
+        "next_cursor": 0,
+    }
 
     idle = FakeNetworkListener(listening=False)
     cleared = await PageTab(FakeNetworkPage(idle), FakeContext()).network.stop()
     assert idle.clear_calls == 1
-    assert cleared == {"listening": False, "was_listening": False, "cleared": True}
+    assert cleared == {
+        "listening": False,
+        "was_listening": False,
+        "cleared": True,
+        "tab_id": "",
+        "listener_token": None,
+        "state": "stopped",
+        "consumed_count": 0,
+        "next_cursor": 0,
+    }
 
 
 @pytest.mark.asyncio
@@ -2424,7 +2536,16 @@ async def test_network_stop_suppresses_partial_driver_attribute_errors() -> None
     result = await PageTab(FakeNetworkPage(listener), FakeContext()).network.stop()
 
     assert listener.stop_calls == 1
-    assert result == {"listening": True, "was_listening": True, "cleared": True}
+    assert result == {
+        "listening": True,
+        "was_listening": True,
+        "cleared": True,
+        "tab_id": "",
+        "listener_token": None,
+        "state": "listening",
+        "consumed_count": 0,
+        "next_cursor": 0,
+    }
 
 
 @pytest.mark.asyncio
@@ -2473,4 +2594,13 @@ async def test_network_stop_without_clear_falls_back_to_stop_when_pause_missing(
     )
 
     assert listener.stop_calls == 1
-    assert result == {"listening": False, "was_listening": True, "cleared": False}
+    assert result == {
+        "listening": False,
+        "was_listening": True,
+        "cleared": False,
+        "tab_id": "",
+        "listener_token": None,
+        "state": "stopped",
+        "consumed_count": 0,
+        "next_cursor": 0,
+    }

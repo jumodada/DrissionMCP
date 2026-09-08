@@ -7,6 +7,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.8.8] - 2026-09-08
+
+### Added
+- Added per-start `listener_token` correlation to `network_listen_wait` and
+  `network_listen_stop`, with stable `LISTENER_NOT_FOUND` recovery for stale
+  listener generations.
+- Added explicit listener `state`, cumulative `consumed_count`, monotonic packet
+  indices/`next_cursor`, startup timing, elapsed wait time, and remaining timeout
+  budget to typed network results.
+
+### Fixed
+- Preserved packets consumed by DrissionPage's synchronous listener when an MCP
+  wait is cancelled, so the next wait can return them instead of silently losing
+  them.
+- Closed and cleared each tab-owned listener before native tab teardown, and
+  kept stale tokens from stopping a replacement listener.
+
+### Verification
+- Added deterministic timeout, cancellation, stale-token, typed-output, schema,
+  redaction, and 100-cycle listener lifecycle regressions.
+- Verified two real Chromium tabs keep listener tokens and packet queues
+  isolated, and verified 100 real listener start/stop cycles leave no active
+  driver, queued packets, request ids, or extra-info ids.
+
+### Release Scope
+- The public surface remains 69 tools, zero prompts, and one optional Skills
+  catalog resource. This release adds backward-compatible fields and optional
+  token inputs to the existing three network listener tools.
+
 ## [0.8.7] - 2026-08-31
 
 ### Added
@@ -699,7 +728,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Fixed` for any bug fixes
 - `Security` in case of vulnerabilities
 
-[Unreleased]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.7...HEAD
+[Unreleased]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.8...HEAD
+[0.8.8]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.7...0.8.8
 [0.8.7]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.6...0.8.7
 [0.8.6]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.5...0.8.6
 [0.8.5]: https://github.com/jumodada/Drissionpage-MCP-Server/compare/0.8.4...0.8.5

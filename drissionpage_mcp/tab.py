@@ -269,6 +269,7 @@ class PageTab:
             await self.mark_closing()
             await self.wait_for_idle()
             try:
+                await self.network.close()
                 browser_context_id = self.browser_context_id
                 if (
                     self.owns_browser_context

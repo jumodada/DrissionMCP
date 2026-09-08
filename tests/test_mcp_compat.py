@@ -29,4 +29,4 @@ def test_ensure_supported_mcp_sdk_raises_actionable_install_error() -> None:
     assert "2.0.0" in message
     assert "mcp>=1.0.0,<2" in message
     assert "python -m pip install" in message
-    assert "drissionpage-mcp>=0.8.7" in message
+    assert "drissionpage-mcp>=0.8.8" in message

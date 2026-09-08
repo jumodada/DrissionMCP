@@ -3,7 +3,7 @@
   "name": "io.github.jumodada/drissionpage-mcp",
   "title": "DrissionPage MCP",
   "description": "Local browser automation for MCP clients powered by DrissionPage.",
-  "version": "0.8.7",
+  "version": "0.8.8",
   "websiteUrl": "https://github.com/jumodada/Drissionpage-MCP-Server",
   "repository": {
     "url": "https://github.com/jumodada/Drissionpage-MCP-Server",
@@ -13,7 +13,7 @@
     {
       "registryType": "pypi",
       "identifier": "drissionpage-mcp",
-      "version": "0.8.7",
+      "version": "0.8.8",
       "transport": {
         "type": "stdio"
       }

@@ -1121,8 +1121,12 @@ class NetworkListenStartData(TabScopedData):
     listening: bool
     filters: dict[str, Any]
     started_at: str
-    tab_id: str
     cleared: bool
+    listener_token: str
+    state: Literal["idle", "listening", "stopped", "closed"]
+    consumed_count: int = Field(ge=0)
+    next_cursor: int = Field(ge=0)
+    timing: dict[str, int]
 
 
 class NetworkListenWaitData(TabScopedData):
@@ -1132,12 +1136,23 @@ class NetworkListenWaitData(TabScopedData):
     limit: int
     packets: list[dict[str, Any]]
     meta: dict[str, Any]
+    listener_token: str | None
+    state: Literal["idle", "listening", "stopped", "closed"]
+    consumed_count: int = Field(ge=0)
+    next_cursor: int = Field(ge=0)
+    timeout_ms: int = Field(ge=0)
+    elapsed_ms: int = Field(ge=0)
+    remaining_timeout_ms: int = Field(ge=0)
 
 
 class NetworkListenStopData(TabScopedData):
     listening: bool
     was_listening: bool
     cleared: bool
+    listener_token: str | None
+    state: Literal["idle", "listening", "stopped", "closed"]
+    consumed_count: int = Field(ge=0)
+    next_cursor: int = Field(ge=0)
 
 
 class NetworkBlockedUrlsSetData(TabScopedData):

@@ -285,14 +285,14 @@ This table is generated from the strict Pydantic input schemas exposed by `tools
 | `wait_time` | `seconds: number` | — |
 | `wait_until` | `condition: string` | `tab_id: string / null = null`<br>`selector: string / string / SelectorTargetInput / AccessibilityTargetInput = ""`<br>`value: string = ""`<br>`name: string = ""`<br>`timeout: number = 10`<br>`interval: number = 0.1`<br>`stable_ms: integer = 300` |
 | `network_listen_start` | — | `tab_id: string / null = null`<br>`targets: array`<br>`is_regex: boolean = false`<br>`method: string = ""`<br>`resource_type: string = ""`<br>`clear: boolean = true` |
-| `network_listen_wait` | — | `tab_id: string / null = null`<br>`timeout: number = 5.0`<br>`limit: integer = 10`<br>`include_headers: boolean = false`<br>`include_body: boolean = false`<br>`max_body_chars: integer = 2000` |
-| `network_listen_stop` | — | `tab_id: string / null = null`<br>`clear: boolean = true` |
+| `network_listen_wait` | — | `tab_id: string / null = null`<br>`listener_token: string / null = null`<br>`timeout: number = 5.0`<br>`limit: integer = 10`<br>`include_headers: boolean = false`<br>`include_body: boolean = false`<br>`max_body_chars: integer = 2000` |
+| `network_listen_stop` | — | `tab_id: string / null = null`<br>`listener_token: string / null = null`<br>`clear: boolean = true` |
 | `network_blocked_urls_set` | `urls: array` | `tab_id: string / null = null` |
 <!-- GENERATED:TOOL-PARAMETERS:END -->
 
 ## Tool Inventory
 
-The 0.8.7 registry contains 69 typed browser tools. Site, component, challenge,
+The 0.8.8 registry contains 69 typed browser tools. Site, component, challenge,
 and business workflows are composed by clients or optional external Skills.
 
 ### Tab Targeting And Scheduling
@@ -369,9 +369,9 @@ upload, scroll, hover, select, check, state, wait, and click-download tools.
 
 | Tool | Type | Required input | Description |
 | --- | --- | --- | --- |
-| `network_listen_start` | Destructive | none | Start DrissionPage 4.x network observation for HTTP/XHR/Fetch packets. No interception or mocking. Optional: `targets`, `is_regex`, `method`, `resource_type`, `clear`. |
-| `network_listen_wait` | Read-only | none | Return after the first matching packet, then briefly drain already-arriving matches up to `limit`; `limit` is a maximum, not a required count. Optional: `timeout`, `include_headers`, `include_body`, `max_body_chars`. |
-| `network_listen_stop` | Destructive | none | Stop network observation and optionally clear the listener queue. Optional: `clear`. |
+| `network_listen_start` | Destructive | none | Start a new DrissionPage 4.x listener generation for HTTP/XHR/Fetch packets and return its token, state, cursor, and startup timing. No interception or mocking. Optional: `targets`, `is_regex`, `method`, `resource_type`, `clear`. |
+| `network_listen_wait` | Read-only | none | Return after the first matching packet, then briefly drain already-arriving matches up to `limit`; report explicit timeout/elapsed/remaining-budget evidence and cumulative cursor state. `limit` is a maximum, not a required count. Optional: `listener_token`, `timeout`, `include_headers`, `include_body`, `max_body_chars`. |
+| `network_listen_stop` | Destructive | none | Stop network observation and optionally clear the listener queue. A supplied stale generation token fails with `LISTENER_NOT_FOUND`. Optional: `listener_token`, `clear`. |
 | `network_blocked_urls_set` | Destructive | `urls` | Replace up to 100 blocked URL patterns and echo the accepted values. An empty list clears all patterns. |
 
 ### Browser Environment
@@ -499,7 +499,7 @@ Resource caps:
 
 ## Prompts
 
-DrissionPage MCP 0.8.7 exposes no MCP prompts. `tools/list`, typed schemas, and
+DrissionPage MCP 0.8.8 exposes no MCP prompts. `tools/list`, typed schemas, and
 typed errors describe the standalone core; procedural guidance belongs in
 optional Skills.
 

@@ -9,6 +9,7 @@ import re
 import pytest
 from jsonschema import ValidationError, validate
 
+from drissionpage_mcp.browser.network import NetworkListenerNotFoundError
 from drissionpage_mcp.response_errors import (
     ErrorCode,
     classify_error,
@@ -86,6 +87,15 @@ def test_error_without_explicit_code_is_classified_from_message() -> None:
     assert payload["error"]["code"] == "ELEMENT_NOT_FOUND"
 
 
+def test_stale_network_listener_has_stable_public_error_contract() -> None:
+    error = NetworkListenerNotFoundError("private stale token value")
+
+    assert classify_error(error, "network_listen_wait") is ErrorCode.LISTENER_NOT_FOUND
+    assert public_exception_message(error, ErrorCode.LISTENER_NOT_FOUND) == (
+        "The requested network listener is stale or not active."
+    )
+
+
 def test_add_error_includes_actionable_recovery_hints() -> None:
     """adds machine-readable next steps without changing the error envelope."""
     response = ToolOutcome()
@@ -127,6 +137,7 @@ def test_recovery_hints_cover_common_runtime_failures() -> None:
     )
     pending_dialog_hints = recovery_hints(ErrorCode.DIALOG_PENDING)
     missing_dialog_hints = recovery_hints(ErrorCode.DIALOG_NOT_FOUND)
+    missing_listener_hints = recovery_hints(ErrorCode.LISTENER_NOT_FOUND)
     assert {hint["action"] for hint in timeout_hints} >= {
         "increase_timeout",
         "inspect_current_page",
@@ -159,6 +170,13 @@ def test_recovery_hints_cover_common_runtime_failures() -> None:
         "page_dialog_observe",
         "page_dialog_respond",
     }
+    assert missing_listener_hints == [
+        {
+            "action": "restart_network_listener",
+            "message": "Start a new network listener and use its returned listener_token.",
+            "tool": "network_listen_start",
+        }
+    ]
 
 
 def test_screenshot_result_includes_image_content_and_json_metadata() -> None:
@@ -993,6 +1011,11 @@ def test_network_schemas_validate_success_payloads() -> None:
         started_at="2026-07-07T00:00:00+00:00",
         tab_id="t0",
         cleared=True,
+        listener_token="listener-1",
+        state="listening",
+        consumed_count=0,
+        next_cursor=0,
+        timing={"startup_ms": 3},
     ).to_dict()
     wait_payload = ToolResult.success(
         "Captured 1 network packet",
@@ -1019,6 +1042,13 @@ def test_network_schemas_validate_success_payloads() -> None:
             }
         ],
         meta={"approx_tokens": 10, "json_chars": 35, "truncated": False},
+        listener_token="listener-1",
+        state="listening",
+        consumed_count=1,
+        next_cursor=1,
+        timeout_ms=5000,
+        elapsed_ms=40,
+        remaining_timeout_ms=4960,
     ).to_dict()
     stop_payload = ToolResult.success(
         "Stopped network listener",
@@ -1026,6 +1056,10 @@ def test_network_schemas_validate_success_payloads() -> None:
         listening=False,
         was_listening=True,
         cleared=True,
+        listener_token="listener-1",
+        state="stopped",
+        consumed_count=1,
+        next_cursor=1,
     ).to_dict()
     validate(start_payload, tool_result_output_schema("network_listen_start"))
     validate(wait_payload, tool_result_output_schema("network_listen_wait"))

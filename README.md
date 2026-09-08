@@ -16,7 +16,7 @@
 
 ## 🖱️ Atomic Browser Control with Natural Pointer Motion
 
-**DrissionPage MCP 0.8.7 exposes 69 typed browser capabilities.** The MCP server provides accurate low-level observation and interaction; the client or an optional Skill composes those capabilities for a site, component library, challenge, or business workflow.
+**DrissionPage MCP 0.8.8 exposes 69 typed browser capabilities.** The MCP server provides accurate low-level observation and interaction; the client or an optional Skill composes those capabilities for a site, component library, challenge, or business workflow.
 
 <!-- mcp-name: io.github.jumodada/drissionpage-mcp -->
 
@@ -75,7 +75,7 @@ Designed for authorized browser automation, testing, accessibility workflows, an
 
 **DrissionPage MCP Server** is a local Model Context Protocol (MCP) server that brings DrissionPage browser automation tools to Codex CLI/IDE, Claude Code, Claude Desktop, and other MCP clients.
 
-The standalone server exposes 69 typed tools, zero MCP prompts, and one static optional-Skills catalog resource. Version 0.8.7 keeps that registry stable while adding explicit tab targeting, per-tab action isolation, and controlled background/window/context tab creation. Every tool loads by default; there is no capability profile or opt-in `full` mode. Models compose these atomic capabilities, while reusable challenge and site procedures live outside the distribution as optional Skills. Browser execution is powered by [DrissionPage](https://github.com/g1879/DrissionPage).
+The standalone server exposes 69 typed tools, zero MCP prompts, and one static optional-Skills catalog resource. Version 0.8.8 keeps that registry stable while adding correlated network-listener generations, explicit packet cursors, timeout evidence, cancellation recovery, and tab-owned cleanup. Every tool loads by default; there is no capability profile or opt-in `full` mode. Models compose these atomic capabilities, while reusable challenge and site procedures live outside the distribution as optional Skills. Browser execution is powered by [DrissionPage](https://github.com/g1879/DrissionPage).
 
 ### 🌟 Why Choose DrissionPage MCP?
 
@@ -107,7 +107,7 @@ DrissionPage MCP is backed by a strict regression suite and browser-backed scena
 curl -fsSL https://chatgpt.com/codex/install.sh | sh
 
 # Install from PyPI
-python -m pip install -U "drissionpage-mcp>=0.8.7"
+python -m pip install -U "drissionpage-mcp>=0.8.8"
 
 # Verify package and environment
 drissionpage-mcp --version
@@ -485,7 +485,7 @@ DP_HEADLESS=1 python playground/run_mcp_lab.py --case form-inspect
 ```bash
 drissionpage-mcp --version
 ```
-Should output the installed package version, for example `drissionpage-mcp 0.8.7`.
+Should output the installed package version, for example `drissionpage-mcp 0.8.8`.
 
 `drissionpage-mcp doctor` must also report both `mcp_supported` and
 `mcp_server_wiring` as `ok`; package-version output alone does not prove that an
@@ -518,13 +518,13 @@ See [docs/troubleshooting.md](docs/troubleshooting.md) for the complete troubles
 | **Package** | ✅ PyPI metadata and build checks |
 | **Status** | 🟡 Beta; real browser behavior depends on local Chrome/Chromium and target sites |
 
-**Version**: 0.8.7 | **License**: Apache 2.0 | **Maintained**: ✅ Active
+**Version**: 0.8.8 | **License**: Apache 2.0 | **Maintained**: ✅ Active
 
 ---
 
 ## 🗺️ Roadmap
 
-### Current (v0.8.7)
+### Current (v0.8.8)
 - [x] 69 atomic navigation, tab/frame/shadow, accessibility, observation, interaction, browser-environment, network, Cookie/storage, wait, and console tools, all loaded by default
 - [x] stdio MCP server integration
 - [x] Doctor diagnostics for local setup
@@ -535,6 +535,7 @@ See [docs/troubleshooting.md](docs/troubleshooting.md) for the complete troubles
 - [x] Atomic type, select, check, click, keyboard, upload, wait, and state-read tools cover native controls and framework-driven widgets without library-specific branches
 - [x] Stable optional `tab_id` targeting across 63 tab-scoped tools, per-tab action serialization, cross-tab parallelism, and draining close/cleanup semantics
 - [x] Tab management with `tab_list`, `tab_switch`, `tab_close`, and `page_navigate(new_tab=true, background=..., new_window=..., new_context=...)`
+- [x] Tab-owned network listener tokens, packet cursors, timeout evidence, cancellation-safe packet recovery, and deterministic close cleanup
 - [x] Observable actions with `page_observe`, `page_evaluate`, `wait_until`, and optional `observe=true` changes on navigation, click, and type
 - [x] Console observability with `page_console_logs`, console summary in `page_observe`, and console change fields in `observe=true`
 - [x] Form, component-library, challenge, and convenience workflows remain outside the MCP core
@@ -697,12 +698,12 @@ If you find this project useful, please consider:
 
 ---
 
-## 🆕 Latest Version: v0.8.7
+## 🆕 Latest Version: v0.8.8
 
-Released on 2026-08-31. This release keeps the 69-tool registry while making multi-tab execution explicit and isolated:
+Released on 2026-09-08. This release keeps the 69-tool registry while making network listener lifetimes explicit and recoverable:
 
-- Adds optional `tab_id` to every tab-scoped tool; omission captures the current tab once, and successful results return the resolved MCP id.
-- Replaces the global browser action lane with per-tab action locks, allowing independent tabs to progress concurrently while keeping same-tab actions serialized.
-- Makes `tab_close` and browser cleanup reject new work and drain in-flight tab actions before closing native browser state.
-- Extends `page_navigate(new_tab=true)` with explicit `background`, `new_window`, and disposable `new_context` creation semantics.
-- Keeps the public surface at 69 tools, zero prompts, and one Skills catalog resource. The external Skills catalog remains pinned to `skills-manager` `v0.8.4`.
+- `network_listen_start` returns a new `listener_token`, lifecycle state, packet cursor, and startup timing for each listener generation.
+- `network_listen_wait` accepts the token and reports cumulative consumption, monotonic packet indices, elapsed time, explicit timeout status, and remaining timeout budget.
+- `network_listen_stop` rejects stale tokens with `LISTENER_NOT_FOUND`, preventing an old task from stopping a replacement listener on the same tab.
+- Cancelled waits preserve packets already removed by DrissionPage, and tab close performs best-effort listener stop/queue cleanup before native teardown.
+- Real Chromium tests isolate listeners across tabs and run 100 start/stop cycles without active driver or queue residue. The public surface remains 69 tools, zero prompts, and one Skills catalog resource.

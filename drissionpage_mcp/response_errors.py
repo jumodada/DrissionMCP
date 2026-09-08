@@ -31,6 +31,7 @@ class ErrorCode(str, Enum):
     AMBIGUOUS_TARGET = "AMBIGUOUS_TARGET"
     DIALOG_PENDING = "DIALOG_PENDING"
     DIALOG_NOT_FOUND = "DIALOG_NOT_FOUND"
+    LISTENER_NOT_FOUND = "LISTENER_NOT_FOUND"
     TAB_NOT_FOUND = "TAB_NOT_FOUND"
     TAB_CLOSED = "TAB_CLOSED"
 
@@ -159,6 +160,7 @@ _PUBLIC_EXCEPTION_MESSAGES: dict[ErrorCode, str] = {
     ErrorCode.DIALOG_NOT_FOUND: (
         "No pending JavaScript dialog is available to respond to."
     ),
+    ErrorCode.LISTENER_NOT_FOUND: "The requested network listener is stale or not active.",
     ErrorCode.TAB_NOT_FOUND: "The requested browser tab was not found.",
     ErrorCode.TAB_CLOSED: "The requested browser tab is closed or closing.",
 }
@@ -246,6 +248,7 @@ DIALOG_PENDING|observe_pending_dialog|Inspect the pending native dialog before c
 DIALOG_PENDING|respond_to_pending_dialog|Accept or dismiss the pending native dialog, then retry the blocked tool.|page_dialog_respond||
 DIALOG_NOT_FOUND|observe_pending_dialog|Check whether an alert, confirm, or prompt is currently pending.|page_dialog_observe||
 DIALOG_NOT_FOUND|retry_after_dialog_opens|Retry the response only after the browser action opens a native dialog.|page_dialog_respond||
+LISTENER_NOT_FOUND|restart_network_listener|Start a new network listener and use its returned listener_token.|network_listen_start||
 """
 
 

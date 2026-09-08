@@ -62,7 +62,7 @@ async def test_catalog_read_is_static_bounded_and_browser_independent(
     payload = json.loads(content.text)
     assert payload == {
         "schema_version": "2",
-        "mcp_version": "0.8.7",
+        "mcp_version": "0.8.8",
         "optional": True,
         "catalog_url": "https://github.com/jumodada/skills-manager",
         "repository_url": "https://github.com/jumodada/skills-manager",

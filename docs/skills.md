@@ -70,7 +70,7 @@ tool calls against the connected DrissionPage MCP server:
 ```text
 Repository: https://github.com/jumodada/skills-manager/tree/v0.8.4
 Skill: skills/xiaohongshu-content-research/SKILL.md
-Core server minimum: drissionpage-mcp 0.8.4; current release: 0.8.7
+Core server minimum: drissionpage-mcp 0.8.4; current release: 0.8.8
 ```
 
 For release validation, install a built wheel or sdist in a clean environment,

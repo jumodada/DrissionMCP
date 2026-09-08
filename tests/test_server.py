@@ -294,6 +294,13 @@ async def test_listener_wait_does_not_block_unrelated_serialized_action(monkeypa
             limit=1,
             packets=[],
             meta={"approx_tokens": 1, "json_chars": 1, "truncated": False},
+            listener_token="listener-1",
+            state="listening",
+            consumed_count=0,
+            next_cursor=0,
+            timeout_ms=150,
+            elapsed_ms=150,
+            remaining_timeout_ms=0,
         )
         return outcome
 
